@@ -23,6 +23,15 @@ class TextMessage(Base, tag="text"):
     text: str
 
 
+class ToolCall(Base, tag="tool"):
+    type = "tool"
+    name: str
+    args: dict[str, str]
+
+
+Message = TextMessage | ToolCall
+
+
 class Client:
     def __init__(self, config: Config):
         self.model = config.model
@@ -31,7 +40,7 @@ class Client:
                 base_url=config.provider
         )
 
-    def ask(self, messages: list[ChatMessage]) -> list[Base]:
+    def ask(self, messages: list[ChatMessage]) -> list[Message]:
         response = self.client.chat.completions.create(
                 model=self.model,
                 # TODO: we don't want to adhere to openai
@@ -43,4 +52,4 @@ class Client:
         )
         content = response.choices[0].message.content
         print(content)
-        return msgspec.json.decode(content, type=list[TextMessage])
+        return msgspec.json.decode(content, type=list[Message])
