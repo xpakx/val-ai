@@ -8,3 +8,8 @@ dependencies = [
     "msgspec>=0.20.0",
     "openai>=2.30.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pyrefly>=0.60.0",
+]
