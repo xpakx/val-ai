@@ -2,6 +2,7 @@ import msgspec
 # TODO: openai uses pydantic, so we might want
 # to switch to direct calls
 import openai
+from typing import TypedDict, Literal
 
 
 class Config(msgspec.Struct, rename="camel"):
@@ -20,6 +21,14 @@ def load_config(filename: str) -> Config:
         raise Exception(f"decode error: {e}")
 
 
+Role = Literal["system", "user", "assistant"]
+
+
+class ChatMessage(TypedDict):
+    role: Role
+    content: str
+
+
 class Client:
     def __init__(self, config: Config):
         self.model = config.model
@@ -28,9 +37,14 @@ class Client:
                 base_url=config.provider
         )
 
-    def ask(self, messages: list[dict[str, str]]):
+    def ask(self, messages: list[ChatMessage]):
         response = self.client.chat.completions.create(
                 model=self.model,
+                # TODO: we don't want to adhere to openai
+                # types, as most models ignore those anyway
+                # and we will probably migrate to direct
+                # HTTP calls anyway
+                # pyrefly: ignore [bad-argument-type]
                 messages=messages
         )
         content = response.choices[0].message.content
@@ -38,7 +52,7 @@ class Client:
 
 
 def main():
-    print("Hello from val-ai!")
+    print("Hello from VAL-ai!")
     config = load_config("data/config.json")
     client = Client(config)
     print(client.ask([{"role": "user", "content": "Hello!"}]))
