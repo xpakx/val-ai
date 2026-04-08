@@ -1,9 +1,7 @@
-# TODO: openai uses pydantic, so we might want
-# to switch to direct calls
-import openai
 import msgspec
 from typing import TypedDict, Literal
 from config import Config
+import requests
 
 
 Role = Literal["system", "user", "assistant"]
@@ -32,24 +30,50 @@ class ToolCall(Base, tag="tool"):
 Message = TextMessage | ToolCall
 
 
+class OpenAIMessage(msgspec.Struct):
+    content: str
+
+
+class OpenAIChoice(msgspec.Struct):
+    message: OpenAIMessage
+
+
+class OpenAIResponse(msgspec.Struct):
+    choices: list[OpenAIChoice]
+
+
 class Client:
     def __init__(self, config: Config):
-        self.model = config.model
-        self.client = openai.OpenAI(
-                api_key=config.api_key,
-                base_url=config.provider
+        self.config = config
+        self.headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {config.api_key}"
+        }
+
+    def call_api(self, messages: list[ChatMessage]) -> OpenAIResponse:
+        payload = {
+            "model": self.config.model,
+            "messages": messages,
+            "temperature": 0.7
+        }
+
+        response = requests.post(
+                f'{self.config.provider}chat/completions',
+                headers=self.headers,
+                json=payload
         )
 
+        if response.status_code == 200:
+            print(response.text)
+            return msgspec.json.decode(response.text, type=OpenAIResponse)
+        else:
+            print(f"Error: {response.status_code}")
+            print(response.text)
+            raise Exception()
+
     def ask(self, messages: list[ChatMessage]) -> list[Message]:
-        response = self.client.chat.completions.create(
-                model=self.model,
-                # TODO: we don't want to adhere to openai
-                # types, as most models ignore those anyway
-                # and we will probably migrate to direct
-                # HTTP calls anyway
-                # pyrefly: ignore [bad-argument-type]
-                messages=messages
-        )
+        response = self.call_api(messages)
+        print(response)
         content = response.choices[0].message.content
         print(content)
         return msgspec.json.decode(content, type=list[Message])

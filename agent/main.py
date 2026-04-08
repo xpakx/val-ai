@@ -59,10 +59,13 @@ class Chat:
         if (user_prompt in ["quit", "exit"]):
             return False
         self.conversation.append({"role": "user", "content": user_prompt})
+        return True
 
     def step(self):
         if (self.read_user_input):
-            self.read_input()
+            cont = self.read_input()
+            if (not cont):
+                return False
 
         ai = self.client.ask(self.conversation)
         print(ai)
