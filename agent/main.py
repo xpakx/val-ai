@@ -2,13 +2,13 @@ from config import load_config
 from client import Client, ChatMessage, ToolCall
 from dataclasses import dataclass
 from typing import Callable
+from toolgen import ToolDescription
 
 
 @dataclass
 class ToolDefinition:
     name: str
-    description: str
-    input_schema: str
+    description: ToolDescription
     function: Callable
 
 
@@ -32,9 +32,7 @@ class Chat:
             and 'name' field tool's name
             """
         for tool in self.tools.values():
-            t += "\n" + 'name: ' + tool.name
-            t += '\ndescription: ' + tool.description
-            t += '\nschema: ' + tool.input_schema
+            t += tool.description.content()
 
         return t
 
@@ -108,8 +106,11 @@ class Chat:
         return tool.function(**call.args)
 
 
-def get_weather(location):
-    if "london" in location.lower():
+def get_weather(city: str) -> dict:
+    """
+    Fetches the current weather for a specific city.
+    """
+    if "london" in city.lower():
         return "15°C and cloudy"
     return "22°C and sunny"
 
@@ -121,8 +122,7 @@ def main():
     chat = Chat(client, input)
     weather = ToolDefinition(
             name="get_weather",
-            description="getting weather",
-            input_schema='{"location": str}',
+            description=ToolDescription(get_weather),
             function=get_weather,
     )
     chat.add_tool(weather)
