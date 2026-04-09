@@ -66,3 +66,43 @@ def list_files(path: str | None = None):
 
     files = [(f'{f.name}/' if f.is_dir() else f.name) for f in dir_path.iterdir()]
     return "\n".join(files)
+
+
+def update_file(path: Path, old_str: str, new_str: str) -> str:
+    if path.is_dir():
+        return "Error: File is a directory"
+
+    content = path.read_text()
+    if old_str in content:
+        new_content = content.replace(old_str, new_str, 1)
+        path.write_text(new_content)
+    else:
+        return "Error: old_str not found; skipping write."
+    path.write_text(new_content)
+    return "Change applied."
+
+
+def create_file(path: Path, new_str: str) -> str:
+    path.write_text(new_str)
+    return "Change applied."
+
+
+def write_file(path: str, old_str: str, new_str: str) -> str:
+    """
+    Changes first occurence of old_str to new_str
+    in a file on filesystem in a folder agent runs in.
+    if file does not exist, creates it
+    """
+    try:
+        file_path = get_safe_path(path)
+    except ValueError as e:
+        return f"Error: {e}"
+
+    try:
+        if file_path.exists():
+            return update_file(file_path, old_str, new_str)
+        else:
+            return create_file(file_path, new_str)
+            return file_path.read_text()
+    except Exception:
+        return "Error: Couldn't write to file!"

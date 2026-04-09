@@ -2,7 +2,7 @@ from config import load_config
 from client import Client, ChatMessage, ToolCall
 from toolgen import get_tool, ToolDefinition
 from ui import UIProvider, CLIProvider
-from tools import read_file, list_files
+from tools import read_file, list_files, write_file
 
 
 class Chat:
@@ -111,10 +111,9 @@ def main():
     read_tool = get_tool(read_file)
     chat.add_tool(read_tool)
     list_tool = get_tool(list_files)
-    print(list_files())
-    print()
-    print(list_files("."))
     chat.add_tool(list_tool)
+    write_tool = get_tool(write_file)
+    chat.add_tool(write_tool)
 
     chat.run()
 
