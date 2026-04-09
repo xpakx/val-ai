@@ -2,6 +2,7 @@ from config import load_config
 from client import Client, ChatMessage, ToolCall
 from toolgen import get_tool, ToolDefinition
 from ui import UIProvider, CLIProvider
+from tools import read_file, list_files
 
 
 class Chat:
@@ -102,22 +103,18 @@ class Chat:
         return tool.function(**call.args)
 
 
-def get_weather(city: str) -> str:
-    """
-    Fetches the current weather for a specific city.
-    """
-    if "london" in city.lower():
-        return "15°C and cloudy"
-    return "22°C and sunny"
-
-
 def main():
     print("Hello from VAL-ai!")
     config = load_config("data/config.json")
     client = Client(config)
     chat = Chat(client, CLIProvider())
-    weather = get_tool(get_weather)
-    chat.add_tool(weather)
+    read_tool = get_tool(read_file)
+    chat.add_tool(read_tool)
+    list_tool = get_tool(list_files)
+    print(list_files())
+    print()
+    print(list_files("."))
+    chat.add_tool(list_tool)
 
     chat.run()
 
