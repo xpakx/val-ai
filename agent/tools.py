@@ -10,11 +10,36 @@ def get_weather(city: str) -> str:
     return "22°C and sunny"
 
 
+def get_safe_path(
+        path: str | None,
+        root_dir: str | Path = "."
+) -> Path:
+    if path is None:
+        path = "."
+
+    root = Path(root_dir).resolve()
+    requested_path = Path(path)
+
+    if requested_path.is_absolute():
+        requested_path = Path("./" + path.lstrip('/'))
+
+    requested_path = (root / requested_path).resolve()
+
+    if not requested_path.is_relative_to(root):
+        raise ValueError(f"Access denied: Path '{path}' is outside the working directory.")
+
+    return requested_path
+
+
 def read_file(path: str):
     """
     Reads the file on filesystem in a folder agent runs in
     """
-    file_path = Path(path)
+    try:
+        file_path = get_safe_path(path)
+    except ValueError as e:
+        return f"Error: {e}"
+
     if not file_path.exists():
         return "Error: File does not exist"
     if file_path.is_dir():
@@ -31,9 +56,11 @@ def list_files(path: str | None = None):
     If no path is provided, lists files in the current
     directory.
     """
-    if path is None:
-        path = ""
-    dir_path = Path(path)
+    try:
+        dir_path = get_safe_path(path)
+    except ValueError as e:
+        return f"Error: {e}"
+
     if not dir_path.is_dir():
         return "Error: File is not a directory"
 
