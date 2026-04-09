@@ -1,15 +1,7 @@
 from config import load_config
 from client import Client, ChatMessage, ToolCall
-from dataclasses import dataclass
 from typing import Callable
-from toolgen import ToolDescription
-
-
-@dataclass
-class ToolDefinition:
-    name: str
-    description: ToolDescription
-    function: Callable
+from toolgen import get_tool, ToolDefinition
 
 
 class Chat:
@@ -120,11 +112,7 @@ def main():
     config = load_config("data/config.json")
     client = Client(config)
     chat = Chat(client, input)
-    weather = ToolDefinition(
-            name="get_weather",
-            description=ToolDescription(get_weather),
-            function=get_weather,
-    )
+    weather = get_tool(get_weather)
     chat.add_tool(weather)
 
     chat.run()

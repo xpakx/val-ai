@@ -1,5 +1,6 @@
 import inspect
 from typing import Callable
+from dataclasses import dataclass
 
 
 class ToolDescription:
@@ -57,3 +58,19 @@ class ToolDescription:
                 output.append(f"- `{param_name}` ({type_str}){default_str}")
 
         return "\n".join(output)
+
+
+@dataclass
+class ToolDefinition:
+    name: str
+    description: ToolDescription
+    function: Callable
+
+
+def get_tool(func: Callable) -> ToolDefinition:
+    desc = ToolDescription(func)
+    return ToolDefinition(
+            name=desc.func_name,
+            description=desc,
+            function=func,
+    )
