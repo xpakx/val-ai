@@ -1,15 +1,50 @@
 from config import load_config
 from client import Client, ChatMessage, ToolCall
-from typing import Callable
 from toolgen import get_tool, ToolDefinition
+from typing import Protocol
+
+
+class UIProvider(Protocol):
+    def print(self, text: str) -> None: ...
+    def debug(self, text: str) -> None: ...
+    def say(self, actor: str, text: str) -> None: ...
+    def get_input(self) -> str: ...
+
+
+DEBUG = False
+
+
+class CLIProvider:
+    def print(self, text: str) -> None:
+        print(text)
+
+    def debug(self, text: str) -> None:
+        if not DEBUG:
+            return
+        print(text)
+
+    def say(self, actor: str, text: str) -> None:
+        if actor == 'Agent':
+            print(f"\033[94m{actor}\033[0m:", end=" ")
+            print(text)
+        else:
+            print(f"\033[33m{actor}\033[0m:", end=" ")
+            print(text)
+
+    def get_input(self) -> str:
+        return input("\033[33mUser\033[0m: ")
 
 
 class Chat:
-    def __init__(self, client: Client, get_input: Callable):
+    def __init__(
+        self,
+        client: Client,
+        ui: UIProvider,
+    ):
         self.client = client
-        self.get_input = get_input
         self.tools: dict[str, ToolDefinition] = {}
         self.conversation: list[ChatMessage] = []
+        self.ui = ui
 
     def get_sys(self):
         t = """all responses must be valid json list.
@@ -35,7 +70,7 @@ class Chat:
             "content": self.get_sys()
 
         })
-        print(self.conversation)
+        self.ui.debug(self.conversation)
         self.read_user_input = True
         while (True):
             cont = self.step()
@@ -43,7 +78,7 @@ class Chat:
                 break
 
     def read_input(self):
-        user_prompt = self.get_input()
+        user_prompt = self.ui.get_input()
         if (not user_prompt):
             return False
         if (user_prompt in ["quit", "exit"]):
@@ -58,7 +93,7 @@ class Chat:
                 return False
 
         ai = self.client.ask(self.conversation)
-        print(ai)
+        self.ui.debug(ai)
         toolResults = []
         for part in ai:
             if part.type == 'text':
@@ -66,11 +101,11 @@ class Chat:
                     "role": "assistant",
                     "content": part.text
                 })
-                print(part.text)
+                self.ui.say("Agent", part.text)
             if part.type == 'tool':
-                print('tool call')
+                self.ui.debug('tool call')
                 toolResult = self.call_tool(part)
-                print(toolResult)
+                self.ui.debug(toolResult)
                 self.conversation.append({
                     "role": "assistant",
                     "content": f"tool call: {part.name}, {part.args}"
@@ -85,7 +120,7 @@ class Chat:
                 {"role": "user",
                  "content": "\n".join(toolResults)}
         )
-        print(self.conversation)
+        self.ui.debug(self.conversation)
         return True
 
     def add_tool(self, tool: ToolDefinition):
@@ -98,7 +133,7 @@ class Chat:
         return tool.function(**call.args)
 
 
-def get_weather(city: str) -> dict:
+def get_weather(city: str) -> str:
     """
     Fetches the current weather for a specific city.
     """
@@ -111,7 +146,7 @@ def main():
     print("Hello from VAL-ai!")
     config = load_config("data/config.json")
     client = Client(config)
-    chat = Chat(client, input)
+    chat = Chat(client, CLIProvider())
     weather = get_tool(get_weather)
     chat.add_tool(weather)
 
