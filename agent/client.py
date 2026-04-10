@@ -81,24 +81,39 @@ class Client:
         print(text)
         try:
             return msgspec.json.decode(text, type=type)
-        except Exception as e:
+        except Exception:
             new_text = self._rescue_imperfect_json(text)
-            if not new_text:
-                raise e
             print(new_text)
             return msgspec.json.decode(new_text, type=type)
 
-    def _rescue_imperfect_json(self, text: str) -> str | None:
+    def _rescue_imperfect_json(self, text: str) -> str:
+        # TODO: we should probably found all potential
+        # candidates and check whether they are proper
+        # json
+        new_text = self._find_json(text)
+        if new_text:
+            return new_text
+        new_text = self._find_json(text, start_symbol='{')
+        if new_text:
+            return "[" + new_text + "]"
+        return '[{"type":"text","text":"'+text+'"}]'
+
+    def _find_json(
+            self,
+            text: str,
+            start_symbol: Literal['[', '{'] = '['
+    ) -> str | None:
         print("rescuing json")
-        start_index = text.find('[')
+        end_symbol = ']' if start_symbol == '[' else '}'
+        start_index = text.find(start_symbol)
         if start_index == -1:
             return None
 
         counter = 0
         for i in range(start_index, len(text)):
-            if text[i] == '[':
+            if text[i] == start_symbol:
                 counter += 1
-            elif text[i] == ']':
+            elif text[i] == end_symbol:
                 counter -= 1
             if counter == 0:
                 return text[start_index:i+1]
