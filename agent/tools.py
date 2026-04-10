@@ -103,6 +103,5 @@ def write_file(path: str, old_str: str, new_str: str) -> str:
             return update_file(file_path, old_str, new_str)
         else:
             return create_file(file_path, new_str)
-            return file_path.read_text()
     except Exception:
         return "Error: Couldn't write to file!"

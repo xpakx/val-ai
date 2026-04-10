@@ -1,5 +1,5 @@
 import msgspec
-from typing import TypedDict, Literal
+from typing import TypedDict, Literal, Type
 from config import Config
 import requests
 
@@ -64,7 +64,6 @@ class Client:
         )
 
         if response.status_code == 200:
-            print(response.text)
             return msgspec.json.decode(response.text, type=OpenAIResponse)
         else:
             print(f"Error: {response.status_code}")
@@ -76,4 +75,31 @@ class Client:
         print(response)
         content = response.choices[0].message.content
         print(content)
-        return msgspec.json.decode(content, type=list[Message])
+        return self._decode(content, type=list[Message])
+
+    def _decode(self, text: str, type: Type) -> list:
+        print(text)
+        try:
+            return msgspec.json.decode(text, type=type)
+        except Exception as e:
+            new_text = self._rescue_imperfect_json(text)
+            if not new_text:
+                raise e
+            print(new_text)
+            return msgspec.json.decode(new_text, type=type)
+
+    def _rescue_imperfect_json(self, text: str) -> str | None:
+        print("rescuing json")
+        start_index = text.find('[')
+        if start_index == -1:
+            return None
+
+        counter = 0
+        for i in range(start_index, len(text)):
+            if text[i] == '[':
+                counter += 1
+            elif text[i] == ']':
+                counter -= 1
+            if counter == 0:
+                return text[start_index:i+1]
+        return None
