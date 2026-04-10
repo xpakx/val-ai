@@ -78,7 +78,6 @@ def update_file(path: Path, old_str: str, new_str: str) -> str:
         path.write_text(new_content)
     else:
         return "Error: old_str not found; skipping write."
-    path.write_text(new_content)
     return "Change applied."
 
 

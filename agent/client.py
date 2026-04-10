@@ -75,28 +75,35 @@ class Client:
         print(response)
         content = response.choices[0].message.content
         print(content)
-        return self._decode(content, type=list[Message])
+        return self._decode(content)
 
-    def _decode(self, text: str, type: Type) -> list:
+    def _decode(self, text: str) -> list[Message]:
         print(text)
         try:
-            return msgspec.json.decode(text, type=type)
+            return msgspec.json.decode(text, type=list[Message])
         except Exception:
             new_text = self._rescue_imperfect_json(text)
             print(new_text)
-            return msgspec.json.decode(new_text, type=type)
+            return new_text
 
-    def _rescue_imperfect_json(self, text: str) -> str:
+    def _rescue_imperfect_json(self, text: str) -> list[Message]:
         # TODO: we should probably found all potential
         # candidates and check whether they are proper
         # json
         new_text = self._find_json(text)
         if new_text:
-            return new_text
+            return msgspec.json.decode(new_text, type=list[Message])
         new_text = self._find_json(text, start_symbol='{')
         if new_text:
-            return "[" + new_text + "]"
-        return '[{"type":"text","text":"'+text+'"}]'
+            return [msgspec.json.decode(new_text, type=Message)]
+        return [TextMessage(text)]
+
+    def _is_valid_json(self, text: bytes) -> bool:
+        try:
+            msgspec.json.decode(text, type=msgspec.Raw)
+            return True
+        except msgspec.DecodeError:
+            return False
 
     def _find_json(
             self,
@@ -116,5 +123,7 @@ class Client:
             elif text[i] == end_symbol:
                 counter -= 1
             if counter == 0:
-                return text[start_index:i+1]
+                potential_text = text[start_index:i+1]
+                if self._is_valid_json(potential_text):
+                    return potential_text
         return None
