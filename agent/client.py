@@ -1,5 +1,5 @@
 import msgspec
-from typing import TypedDict, Literal, Type
+from typing import TypedDict, Literal
 from config import Config
 import requests
 
@@ -42,6 +42,7 @@ class OpenAIResponse(msgspec.Struct):
     choices: list[OpenAIChoice]
 
 
+# TODO: native tool call if model supports them
 class Client:
     def __init__(self, config: Config):
         self.config = config

@@ -3,6 +3,8 @@ from client import Client, ChatMessage, ToolCall
 from toolgen import get_tool, ToolDefinition
 from ui import UIProvider, CLIProvider
 from tools import read_file, list_files, write_file
+from systemparts import current_time
+from systemprompt import get_system_prompt_info, SystemPromptInformation
 
 
 class Chat:
@@ -14,6 +16,7 @@ class Chat:
         self.client = client
         self.tools: dict[str, ToolDefinition] = {}
         self.conversation: list[ChatMessage] = []
+        self.system_prompt_parts: list[SystemPromptInformation] = []
         self.ui = ui
 
     def get_sys(self):
@@ -26,8 +29,16 @@ class Chat:
         if len(self.tools) > 0:
             t = t + """if type is tool, then element represents
             tool call and field 'args' must follow tool's schema
-            and 'name' field tool's name
+            and 'name' field tool's name\n
             """
+        else:
+            t = t + '\n'
+
+        for part in self.system_prompt_parts:
+            part_value = part.content()
+            if part_value:
+                t += part_value
+                t += '\n'
         for tool in self.tools.values():
             t += tool.description.content()
 
@@ -102,6 +113,9 @@ class Chat:
             return "Error: no such tool"
         return tool.function(**call.args)
 
+    def add_system_part(self, part: SystemPromptInformation):
+        self.system_prompt_parts.append(part)
+
 
 def main():
     print("Hello from VAL-ai!")
@@ -114,6 +128,9 @@ def main():
     chat.add_tool(list_tool)
     write_tool = get_tool(write_file)
     chat.add_tool(write_tool)
+
+    time = get_system_prompt_info(current_time)
+    chat.add_system_part(time)
 
     chat.run()
 
