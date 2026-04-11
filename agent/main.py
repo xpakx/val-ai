@@ -1,10 +1,10 @@
-from config import load_config
-from client import Client, ChatMessage, ToolCall
-from toolgen import get_tool, ToolDefinition
-from ui import UIProvider, CLIProvider
-from tools import read_file, list_files, write_file
-from systemparts import current_time
-from systemprompt import get_system_prompt_info, SystemPromptInformation
+from agent.config import load_config
+from agent.client import Client, ChatMessage, ToolCall
+from agent.toolgen import get_tool, ToolDefinition
+from agent.ui import UIProvider, CLIProvider
+from agent.tools import read_file, list_files, write_file
+from agent.systemparts import current_time
+from agent.systemprompt import get_system_prompt_info, SystemPromptInformation
 
 
 class Chat:

@@ -1,6 +1,6 @@
 import msgspec
 from typing import TypedDict, Literal
-from config import Config
+from agent.config import Config
 import requests
 
 
