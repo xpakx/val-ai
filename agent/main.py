@@ -5,14 +5,14 @@ from agent.ui import UIProvider, CLIProvider
 from agent.tools import read_file, list_files, write_file
 from agent.systemparts import current_time
 from agent.systemprompt import get_system_prompt_info, SystemPromptInformation
-from typing import TypeGuard
+from typing import TypeIs
 
 
-def is_tool_call(val: Message) -> TypeGuard[ToolCall]:
+def is_tool_call(val: Message) -> TypeIs[ToolCall]:
     return val.type == 'tool'
 
 
-def is_text_msg(val: Message) -> TypeGuard[TextMessage]:
+def is_text_msg(val: Message) -> TypeIs[TextMessage]:
     return val.type == 'text'
 
 
@@ -92,7 +92,7 @@ class Chat:
                     "content": part.text
                 })
                 self.ui.say("Agent", part.text)
-            elif is_tool_call(part):
+            else:
                 self.ui.debug('tool call')
                 toolResult = self.call_tool(part)
                 self.ui.debug(toolResult)
