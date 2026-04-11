@@ -1,16 +1,20 @@
 import inspect
-from typing import Callable
+from typing import Callable, Any
 
 
 class SystemPromptInformation:
     def __init__(self, target_function: Callable):
         self.target_function = target_function
         self._description = None
+        self.dirty = False
 
     def content(self) -> str:
         if not self._description:
             self.generate()
         return self._do_generate()
+
+    def update(self, context: dict[str, Any]) -> None:
+        pass
 
     def _do_generate(self) -> str:
         desc = self._description or ''
