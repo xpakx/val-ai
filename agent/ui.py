@@ -1,9 +1,9 @@
-from typing import Protocol
+from typing import Protocol, Any
 
 
 class UIProvider(Protocol):
     def print(self, text: str) -> None: ...
-    def debug(self, text: str) -> None: ...
+    def debug(self, text: Any) -> None: ...
     def say(self, actor: str, text: str) -> None: ...
     def get_input(self) -> str: ...
 
@@ -15,7 +15,7 @@ class CLIProvider:
     def print(self, text: str) -> None:
         print(text)
 
-    def debug(self, text: str) -> None:
+    def debug(self, text: Any) -> None:
         if not DEBUG:
             return
         print(text)

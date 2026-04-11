@@ -1,10 +1,19 @@
 from agent.config import load_config
-from agent.client import Client, ChatMessage, ToolCall
+from agent.client import Client, ChatMessage, ToolCall, Message, TextMessage
 from agent.toolgen import get_tool, ToolDefinition
 from agent.ui import UIProvider, CLIProvider
 from agent.tools import read_file, list_files, write_file
 from agent.systemparts import current_time
 from agent.systemprompt import get_system_prompt_info, SystemPromptInformation
+from typing import TypeGuard
+
+
+def is_tool_call(val: Message) -> TypeGuard[ToolCall]:
+    return val.type == 'tool'
+
+
+def is_text_msg(val: Message) -> TypeGuard[TextMessage]:
+    return val.type == 'text'
 
 
 class Chat:
@@ -77,13 +86,13 @@ class Chat:
         self.ui.debug(ai)
         toolResults = []
         for part in ai:
-            if part.type == 'text':
+            if is_text_msg(part):
                 self.conversation.append({
                     "role": "assistant",
                     "content": part.text
                 })
                 self.ui.say("Agent", part.text)
-            if part.type == 'tool':
+            elif is_tool_call(part):
                 self.ui.debug('tool call')
                 toolResult = self.call_tool(part)
                 self.ui.debug(toolResult)

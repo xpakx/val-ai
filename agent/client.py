@@ -99,7 +99,7 @@ class Client:
             return [msgspec.json.decode(new_text, type=Message)]
         return [TextMessage(text)]
 
-    def _is_valid_json(self, text: bytes) -> bool:
+    def _is_valid_json(self, text: str) -> bool:
         try:
             msgspec.json.decode(text, type=msgspec.Raw)
             return True
