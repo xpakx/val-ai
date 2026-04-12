@@ -120,7 +120,10 @@ class Chat:
         tool = self.tools[call.name]
         if not tool:
             return "Error: no such tool"
-        return tool.function(**call.args)
+        try:
+            return tool.function(**call.args)
+        except Exception:
+            return "Error while calling tool"
 
     def add_system_part(self, part: SystemPromptInformation):
         self.system_prompt_parts.append(part)
