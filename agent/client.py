@@ -52,6 +52,12 @@ class Client:
         }
         self.backoff = backoff
 
+    def set_backoff(self, backoff: Callable):
+        self.backoff = backoff
+
+    def unset_backoff(self):
+        self.backoff = None
+
     def call_backoff(
             self, payload: dict[str, Any]) -> requests.Response | None:
         if not self.backoff:

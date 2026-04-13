@@ -6,6 +6,7 @@ from agent.tools import read_file, list_files, write_file
 from agent.systemparts import current_time
 from agent.systemprompt import get_system_prompt_info, SystemPromptInformation
 from agent.fibonacci import fibonacci_backoff
+from agent.prompt import Prompt, ConditionalPrompt
 from typing import TypeIs
 
 
@@ -28,27 +29,34 @@ class Chat:
         self.conversation: list[ChatMessage] = []
         self.system_prompt_parts: list[SystemPromptInformation] = []
         self.ui = ui
+        self.prepare_prompt()
 
-    def get_sys(self):
-        t = """all responses must be valid json list.
+    def prepare_prompt(self):
+        self.prompt = Prompt(
+            """all responses must be valid json list.
             each element would have 'type' field.
             if type is text, then element represents
             message for user, and the message itself would be
             in text field.
-            """
-        if len(self.tools) > 0:
-            t = t + """if type is tool, then element represents
+            """)
+        tool_prompt = ConditionalPrompt(
+            """if type is tool, then element represents
             tool call and field 'args' must follow tool's schema
             and 'name' field tool's name\n
-            """
-        else:
-            t = t + '\n'
+            """,
+            "has_tools"
+        )
+        self.prompt.add_part(tool_prompt)
+        self.prompt.update({"has_tools": len(self.tools) > 0})
 
         for part in self.system_prompt_parts:
-            part_value = part.content()
-            if part_value:
-                t += part_value
-                t += '\n'
+            self.prompt.add_part(part)
+
+    def get_sys(self):
+        self.prompt.update({"has_tools": len(self.tools) > 0})
+        t = self.prompt.content()
+
+        # TODO: move to prompt
         for tool in self.tools.values():
             t += tool.description.content()
 
