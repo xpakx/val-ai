@@ -1,8 +1,14 @@
 import time
-from typing import Callable
+from typing import Callable, TypeVar
+
+T = TypeVar("T")
 
 
-def fibonacci_backoff(task: Callable, max_attempts: int, start_index: int = 0):
+def fibonacci_backoff(
+        task: Callable[[], T],
+        max_attempts: int,
+        start_index: int = 0
+) -> T | None:
     a, b = 1, 1
     i = 0
     for _ in range(start_index):

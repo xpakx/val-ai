@@ -52,7 +52,10 @@ class Client:
         }
         self.backoff = backoff
 
-    def call_backoff(self, payload: dict[str, Any]) -> requests.Response:
+    def call_backoff(
+            self, payload: dict[str, Any]) -> requests.Response | None:
+        if not self.backoff:
+            return None
         return self.backoff(
                 lambda: requests.post(
                         f'{self.config.provider}chat/completions',
@@ -78,7 +81,9 @@ class Client:
                 json=payload
             )
 
-
+        if not response:
+            print("Error: no response")
+            raise Exception()
 
         if response.status_code == 200:
             return msgspec.json.decode(response.text, type=OpenAIResponse)
