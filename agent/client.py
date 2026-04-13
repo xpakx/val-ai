@@ -1,5 +1,5 @@
 import msgspec
-from typing import TypedDict, Literal
+from typing import TypedDict, Literal, Callable, Any
 from agent.config import Config
 import requests
 
@@ -44,12 +44,23 @@ class OpenAIResponse(msgspec.Struct):
 
 # TODO: native tool call if model supports them
 class Client:
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, backoff: Callable | None = None):
         self.config = config
         self.headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {config.api_key}"
         }
+        self.backoff = backoff
+
+    def call_backoff(self, payload: dict[str, Any]) -> requests.Response:
+        return self.backoff(
+                lambda: requests.post(
+                        f'{self.config.provider}chat/completions',
+                        headers=self.headers,
+                        json=payload
+                ),
+                5
+        )
 
     def call_api(self, messages: list[ChatMessage]) -> OpenAIResponse:
         payload = {
@@ -58,11 +69,16 @@ class Client:
             "temperature": 0.7
         }
 
-        response = requests.post(
+        if self.backoff:
+            response = self.call_backoff(payload)
+        else:
+            response = requests.post(
                 f'{self.config.provider}chat/completions',
                 headers=self.headers,
                 json=payload
-        )
+            )
+
+
 
         if response.status_code == 200:
             return msgspec.json.decode(response.text, type=OpenAIResponse)

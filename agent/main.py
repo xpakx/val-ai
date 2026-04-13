@@ -5,6 +5,7 @@ from agent.ui import UIProvider, CLIProvider
 from agent.tools import read_file, list_files, write_file
 from agent.systemparts import current_time
 from agent.systemprompt import get_system_prompt_info, SystemPromptInformation
+from agent.fibonacci import fibonacci_backoff
 from typing import TypeIs
 
 
@@ -132,7 +133,7 @@ class Chat:
 def main():
     print("Hello from VAL-ai!")
     config = load_config("data/config.json")
-    client = Client(config)
+    client = Client(config, fibonacci_backoff)
     chat = Chat(client, CLIProvider())
     read_tool = get_tool(read_file)
     chat.add_tool(read_tool)

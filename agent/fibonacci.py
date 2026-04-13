@@ -1,7 +1,8 @@
 import time
+from typing import Callable
 
 
-def fibonacci_backoff(task, max_attempts, start_index=0):
+def fibonacci_backoff(task: Callable, max_attempts: int, start_index: int = 0):
     a, b = 1, 1
     i = 0
     for _ in range(start_index):
