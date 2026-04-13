@@ -47,23 +47,23 @@ class Chat:
             "has_tools"
         )
         self.prompt.add_part(tool_prompt)
-        self.prompt.update({"has_tools": len(self.tools) > 0})
 
         for part in self.system_prompt_parts:
             self.prompt.add_part(part)
 
+        self.tools_subprompt = ConditionalPrompt("# TOOLS\n", "has_tools")
+        for tool in self.tools.values():
+            self.tools_subprompt.add_part(tool.description)
+        self.prompt.add_part(self.tools_subprompt)
+        self.prompt.update({"has_tools": len(self.tools) > 0})
+
     def get_sys(self):
         self.prompt.update({"has_tools": len(self.tools) > 0})
-        t = self.prompt.content()
-
-        # TODO: move to prompt
-        for tool in self.tools.values():
-            t += tool.description.content()
-
-        return t
+        return self.prompt.content()
 
     def run(self):
         self.conversation = []
+        print(self.get_sys())
         self.conversation.append({
             "role": "system",
             "content": self.get_sys()
@@ -124,6 +124,7 @@ class Chat:
 
     def add_tool(self, tool: ToolDefinition):
         self.tools[tool.name] = tool
+        self.tools_subprompt.add_part(tool.description)
 
     def call_tool(self, call: ToolCall):
         tool = self.tools[call.name]
@@ -153,6 +154,7 @@ def main():
     time = get_system_prompt_info(current_time)
     chat.add_system_part(time)
 
+    chat.prepare_prompt()  # TODO
     chat.run()
 
 

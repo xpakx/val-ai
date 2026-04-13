@@ -1,5 +1,5 @@
 import inspect
-from typing import Callable
+from typing import Callable, Any
 from dataclasses import dataclass
 
 
@@ -8,6 +8,7 @@ class ToolDescription:
         self.target_function = target_function
         self.func_name = target_function.__name__
         self._content = None
+        self.dirty = True
 
     def _format_type(self, annotation) -> str:
         if annotation is inspect.Parameter.empty:
@@ -23,6 +24,9 @@ class ToolDescription:
                 line.strip() for line in docstring.split('\n') if line.strip()
         ]
         return lines[0] if lines else None
+
+    def update(self, context: dict[str, Any]) -> None:
+        pass
 
     def content(self) -> str:
         if self._content:
