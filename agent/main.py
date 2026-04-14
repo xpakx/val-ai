@@ -48,8 +48,10 @@ class Chat:
         )
         self.prompt.add_part(tool_prompt)
 
+        self.info_subprompt = Prompt("")
         for part in self.system_prompt_parts:
-            self.prompt.add_part(part)
+            self.info_subprompt.add_part(part)
+        self.prompt.add_part(self.info_subprompt)
 
         self.tools_subprompt = ConditionalPrompt("# TOOLS\n", "has_tools")
         for tool in self.tools.values():
@@ -137,6 +139,7 @@ class Chat:
 
     def add_system_part(self, part: SystemPromptInformation):
         self.system_prompt_parts.append(part)
+        self.info_subprompt.add_part(part)
 
 
 def main():
@@ -154,7 +157,6 @@ def main():
     time = get_system_prompt_info(current_time)
     chat.add_system_part(time)
 
-    chat.prepare_prompt()  # TODO
     chat.run()
 
 
