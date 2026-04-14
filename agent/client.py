@@ -87,9 +87,12 @@ class Client:
                 json=payload
             )
 
-        if not response:
+        if response is None:
             print("Error: no response")
-            print(response.status_code)
+            raise Exception()
+
+        if not response:
+            print(f"Error: {response.status_code} error:")
             print(response.text)
             raise Exception()
 
