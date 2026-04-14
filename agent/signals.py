@@ -1,4 +1,9 @@
-class Observable:
+from typing import Generic, TypeVar, Callable
+
+T = TypeVar("T")
+
+
+class Observable(Generic[T]):
     def __init__(self):
         self._observers = []
 
@@ -11,22 +16,22 @@ class Observable:
             observer.update()
 
 
-class Signal(Observable):
-    def __init__(self, value):
+class Signal(Observable[T]):
+    def __init__(self, value: T):
         super().__init__()
         self._value = value
 
-    def __call__(self):
+    def __call__(self) -> T:
         return self._value
 
-    def set(self, new_value):
+    def set(self, new_value: T):
         if self._value != new_value:
             self._value = new_value
             self._notify()
 
 
-class Computed(Observable):
-    def __init__(self, fn, deps):
+class Computed(Observable[T]):
+    def __init__(self, fn: Callable[..., T], deps: "list[Signal | Computed]"):
         super().__init__()
         self._fn = fn
         self._deps = deps
@@ -37,46 +42,66 @@ class Computed(Observable):
 
         self.update()
 
-    def update(self):
+    def update(self) -> None:
         new_value = self._fn(*[d() for d in self._deps])
         if self._value != new_value:
             self._value = new_value
             self._notify()
 
-    def __call__(self):
+    def __call__(self) -> T | None:
         return self._value
 
 
 class Effect:
-    def __init__(self, fn, deps):
+    def __init__(self, fn: Callable, deps: list[Signal | Computed]):
         self._fn = fn
         self._deps = deps
         for dep in self._deps:
             dep._subscribe(self)
         self.update()
 
-    def update(self):
+    def update(self) -> None:
         self._fn(*[d() for d in self._deps])
 
 
-if __name__ == "__main__":
-    count = Signal(10)
-    multiplier = Signal(2)
+def signal(val: T) -> Signal[T]:
+    return Signal(val)
 
-    total = Computed(
+
+def computed(
+        fn: Callable[..., T],
+        deps: list[Signal | Computed]
+) -> Computed[T]:
+    return Computed(fn, deps)
+
+
+def effect(
+        fn: Callable,
+        deps: list[Signal | Computed]
+) -> Effect:
+    return Effect(fn, deps)
+
+
+if __name__ == "__main__":
+    count = signal(10)
+    multiplier = signal(2)
+
+    total = computed(
         fn=lambda c, m: c * m,
         deps=[count, multiplier]
     )
 
-    is_even = Computed(
+    is_even = computed(
         fn=lambda t: t % 2 == 0,
         deps=[total]
     )
 
-    Effect(
+    effect(
         fn=lambda t, e: print(f"Total is {t}, Even: {e}"),
         deps=[total, is_even]
     )
 
     multiplier.set(3)
     count.set(7)
+
+    print(count())
