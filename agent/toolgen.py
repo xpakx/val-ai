@@ -9,6 +9,7 @@ class ToolDescription:
         self.func_name = target_function.__name__
         self._content = None
         self.dirty = True
+        self.parent = None
 
     def _format_type(self, annotation) -> str:
         if annotation is inspect.Parameter.empty:
@@ -27,6 +28,11 @@ class ToolDescription:
 
     def update(self, context: dict[str, Any]) -> None:
         pass
+
+    def make_dirty(self) -> None:
+        self.dirty = True
+        if self.parent:
+            self.parent.make_dirty()
 
     def content(self) -> str:
         if self._content:

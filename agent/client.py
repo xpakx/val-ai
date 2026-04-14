@@ -89,6 +89,8 @@ class Client:
 
         if not response:
             print("Error: no response")
+            print(response.status_code)
+            print(response.text)
             raise Exception()
 
         if response.status_code == 200:

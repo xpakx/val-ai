@@ -3,8 +3,10 @@ from typing import Protocol, Any
 
 class PromptPart(Protocol):
     dirty: bool
+    parent: "None | PromptPart"
     def content(self) -> str: ...
     def update(self, context: dict[str, Any]) -> None: ...
+    def make_dirty(self) -> None: ...
 
 
 class Prompt:
@@ -12,17 +14,16 @@ class Prompt:
         self._text = message
         self.parts: list[PromptPart] = []
         self.dirty = True
+        self.parent: None | PromptPart = None
         self._content = ""
 
     def add_part(self, part: PromptPart):
         self.parts.append(part)
-        self.dirty = True
+        self.make_dirty()
 
     def update(self, context: dict[str, Any]) -> None:
         for part in self.parts:
             part.update(context)
-            if part.dirty:
-                self.dirty = True
 
     def content(self) -> str:
         if self.dirty:
@@ -40,12 +41,18 @@ class Prompt:
                 content += '\n'
         return content
 
+    def make_dirty(self) -> None:
+        self.dirty = True
+        if self.parent:
+            self.parent.make_dirty()
+
 
 class ConditionalPrompt(Prompt):
     def __init__(self, message: str, var: str):
         self._text = message
         self._var = var
         self._show = True
+        self.parent = None
         self.parts: list[PromptPart] = []
         self.dirty = True
         self._content = ""
@@ -55,11 +62,9 @@ class ConditionalPrompt(Prompt):
             new_var = context[self._var]
             if new_var != self._show:
                 self._show = new_var
-                self.dirty = True
+                self.make_dirty()
         for part in self.parts:
             part.update(context)
-            if part.dirty:
-                self.dirty = True
 
     def generate(self) -> str:
         content = self._text if self._show else ''

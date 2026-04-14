@@ -7,6 +7,7 @@ class SystemPromptInformation:
         self.target_function = target_function
         self._description = None
         self.dirty = False
+        self.parent = None
 
     def content(self) -> str:
         if not self._description:
@@ -32,6 +33,11 @@ class SystemPromptInformation:
         if (not func_doc):
             raise Exception('Prompt provider does not have description')
         self._description = func_doc
+
+    def make_dirty(self) -> None:
+        self.dirty = True
+        if self.parent:
+            self.parent.make_dirty()
 
 
 def get_system_prompt_info(func: Callable) -> SystemPromptInformation:
