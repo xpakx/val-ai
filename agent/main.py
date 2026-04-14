@@ -6,7 +6,8 @@ from agent.tools import read_file, list_files, write_file
 from agent.systemparts import current_time
 from agent.systemprompt import get_system_prompt_info, SystemPromptInformation
 from agent.fibonacci import fibonacci_backoff
-from agent.prompt import Prompt, ConditionalPrompt
+from agent.prompt import Prompt
+from agent.signals import signal
 from typing import TypeIs
 
 
@@ -29,6 +30,7 @@ class Chat:
         self.conversation: list[ChatMessage] = []
         self.system_prompt_parts: list[SystemPromptInformation] = []
         self.ui = ui
+        self.show_tools = signal(True)
         self.prepare_prompt()
 
     def prepare_prompt(self):
@@ -39,13 +41,13 @@ class Chat:
             message for user, and the message itself would be
             in text field.
             """)
-        tool_prompt = ConditionalPrompt(
+        tool_prompt = Prompt(
             """if type is tool, then element represents
             tool call and field 'args' must follow tool's schema
             and 'name' field tool's name\n
-            """,
-            "has_tools"
+            """
         )
+        tool_prompt.bind_visibility(self.show_tools)
         self.prompt.add_part(tool_prompt)
 
         self.info_subprompt = Prompt("")
@@ -53,14 +55,15 @@ class Chat:
             self.info_subprompt.add_part(part)
         self.prompt.add_part(self.info_subprompt)
 
-        self.tools_subprompt = ConditionalPrompt("# TOOLS\n", "has_tools")
+        self.tools_subprompt = Prompt("# TOOLS\n")
+        self.tools_subprompt.bind_visibility(self.show_tools)
         for tool in self.tools.values():
             self.tools_subprompt.add_part(tool.description)
         self.prompt.add_part(self.tools_subprompt)
-        self.prompt.update({"has_tools": len(self.tools) > 0})
+        self.show_tools.set(len(self.tools) > 0)
 
     def get_sys(self):
-        self.prompt.update({"has_tools": len(self.tools) > 0})
+        self.show_tools.set(len(self.tools) > 0)
         return self.prompt.content()
 
     def run(self):
