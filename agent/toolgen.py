@@ -1,15 +1,17 @@
 import inspect
 from typing import Callable, Any
 from dataclasses import dataclass
+from agent.prompt import Prompt
 
 
-class ToolDescription:
+class ToolDescription(Prompt):
     def __init__(self, target_function: Callable):
         self.target_function = target_function
         self.func_name = target_function.__name__
-        self._content = None
+        self._content = ""
         self.dirty = True
         self.parent = None
+        self._show = True
 
     def _format_type(self, annotation) -> str:
         if annotation is inspect.Parameter.empty:

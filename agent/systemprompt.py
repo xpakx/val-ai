@@ -1,5 +1,6 @@
 import inspect
 from typing import Callable, Any
+from agent.signals import Computed, Signal
 
 
 class SystemPromptInformation:
@@ -38,6 +39,9 @@ class SystemPromptInformation:
         self.dirty = True
         if self.parent:
             self.parent.make_dirty()
+
+    def bind_visibility(self, sig: Signal | Computed) -> None:
+        pass
 
 
 def get_system_prompt_info(func: Callable) -> SystemPromptInformation:
