@@ -1,9 +1,10 @@
 import inspect
 from typing import Callable, Any
 from agent.signals import Computed, Signal
+from agent.prompt import Prompt
 
 
-class SystemPromptInformation:
+class SystemPromptInformation(Prompt):
     def __init__(self, target_function: Callable):
         self.target_function = target_function
         self._description = None
@@ -12,7 +13,7 @@ class SystemPromptInformation:
 
     def content(self) -> str:
         if not self._description:
-            self.generate()
+            self._description = self.generate()
         return self._do_generate()
 
     def update(self, context: dict[str, Any]) -> None:
@@ -29,19 +30,11 @@ class SystemPromptInformation:
         ]
         return lines[0] if lines else None
 
-    def generate(self) -> None:
+    def generate(self) -> str:
         func_doc = inspect.getdoc(self.target_function)
         if (not func_doc):
             raise Exception('Prompt provider does not have description')
-        self._description = func_doc
-
-    def make_dirty(self) -> None:
-        self.dirty = True
-        if self.parent:
-            self.parent.make_dirty()
-
-    def bind_visibility(self, sig: Signal | Computed) -> None:
-        pass
+        return func_doc
 
 
 def get_system_prompt_info(func: Callable) -> SystemPromptInformation:

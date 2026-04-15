@@ -31,11 +31,6 @@ class ToolDescription(Prompt):
     def update(self, context: dict[str, Any]) -> None:
         pass
 
-    def make_dirty(self) -> None:
-        self.dirty = True
-        if self.parent:
-            self.parent.make_dirty()
-
     def content(self) -> str:
         if self._content:
             return self._content
