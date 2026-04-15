@@ -105,7 +105,22 @@ class TemplatedPrompt(Prompt):
         print(placeholders)
         for placeholder in placeholders:
             print(placeholder)
-            if placeholder in defaults:
+            if defaults and placeholder in defaults:
                 self._defaults[placeholder] = defaults[placeholder]
             else:
                 self._defaults[placeholder] = f"${placeholder}"
+
+    def set_field(self, field: str, val: Any) -> None:
+        self._values[field] = val
+        self.make_dirty()
+        self.template_dirty = True
+
+    def bind_field(
+            self, field: str, sig: Signal[Any] | Computed[Any]) -> None:
+        if field not in self._defaults:
+            return
+        eff = effect(
+                lambda val: self.set_field(field, val),
+                [sig]
+        )
+        self._effects.append(eff)
