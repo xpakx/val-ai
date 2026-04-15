@@ -67,16 +67,10 @@ class Prompt:
 class TemplatedPrompt(Prompt):
     def __init__(
             self, template: Template, defaults: None | dict[str, Any] = None):
+        super().__init__("") 
         self._template: Template = template
-        self._text = ""
-        self.parts: list[PromptPart] = []
-        self.dirty = True
         self.template_dirty = True
         self._prepare_defaults(defaults)
-        self.parent: None | PromptPart = None
-        self._content = ""
-        self._show = True
-        self._effects: list[Effect] = []
 
     def generate(self) -> str:
         if self.template_dirty:
