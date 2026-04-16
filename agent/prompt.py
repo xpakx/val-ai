@@ -1,6 +1,7 @@
 from typing import Protocol, Any
 from agent.signals import Signal, Computed, effect, Effect
 from string import Template
+from inspect import cleandoc
 
 
 class PromptPart(Protocol):
@@ -15,12 +16,16 @@ class PromptPart(Protocol):
 class Prompt:
     def __init__(self, message: str):
         self._text = message
+        self.clean_prompt()
         self.parts: list[PromptPart] = []
         self.dirty = True
         self.parent: None | PromptPart = None
         self._content = ""
         self._show = True
         self._effects: list[Effect] = []
+
+    def clean_prompt(self):
+        self._text = cleandoc(self._text)
 
     def add_part(self, part: PromptPart):
         self.parts.append(part)
@@ -67,7 +72,7 @@ class Prompt:
 class TemplatedPrompt(Prompt):
     def __init__(
             self, template: Template, defaults: None | dict[str, Any] = None):
-        super().__init__("") 
+        super().__init__("")
         self._template: Template = template
         self.template_dirty = True
         self._prepare_defaults(defaults)
@@ -75,6 +80,7 @@ class TemplatedPrompt(Prompt):
     def generate(self) -> str:
         if self.template_dirty:
             self._text = self.update_template()
+            self.clean_prompt()
         content = self._text if self._show else ''
 
         for part in self.parts:
