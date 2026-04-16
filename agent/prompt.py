@@ -1,4 +1,4 @@
-from typing import Protocol, Any
+from typing import Protocol, Any, Self
 from agent.signals import Signal, Computed, effect, Effect
 from string import Template
 from inspect import cleandoc
@@ -127,7 +127,7 @@ class TemplatedPrompt(Prompt):
         self._effects.append(eff)
 
     @classmethod
-    def from_file(cls, filepath: str | Path) -> "TemplatedPrompt":
+    def from_file(cls, filepath: str | Path) -> Self:
         path = Path(filepath)
         if not path.exists():
             raise FileNotFoundError(f"Could not find prompt part at {path}")

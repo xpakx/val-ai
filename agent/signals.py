@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar, Callable
+from typing import Generic, TypeVar, Callable, Self
 
 T = TypeVar("T")
 
@@ -31,7 +31,7 @@ class Signal(Observable[T]):
 
 
 class Computed(Observable[T]):
-    def __init__(self, fn: Callable[..., T], deps: "list[Signal | Computed]"):
+    def __init__(self, fn: Callable[..., T], deps: list[Signal | Self]):
         super().__init__()
         self._fn = fn
         self._deps = deps
