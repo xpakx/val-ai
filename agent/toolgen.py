@@ -40,9 +40,6 @@ class ToolDescription(Prompt):
         func_doc = inspect.getdoc(self.target_function)
         if (not func_doc):
             raise Exception('Tool does not have description')
-        short_desc = self._get_docstring_description(func_doc)
-        if (not short_desc):
-            raise Exception('Tool does not have description')
 
         sig = inspect.signature(self.target_function)
 
