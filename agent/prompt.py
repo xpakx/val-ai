@@ -69,6 +69,14 @@ class Prompt:
         )
         self._effects.append(eff)
 
+    @classmethod
+    def from_file(cls, filepath: str | Path) -> Self:
+        path = Path(filepath)
+        if not path.exists():
+            raise FileNotFoundError(f"Could not find prompt part at {path}")
+        file_content = path.read_text()
+        return cls(file_content)
+
 
 class TemplatedPrompt(Prompt):
     def __init__(
