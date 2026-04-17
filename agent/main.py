@@ -34,19 +34,8 @@ class Chat:
         self.prepare_prompt()
 
     def prepare_prompt(self):
-        self.prompt = Prompt(
-            """all responses must be valid json list.
-            each element would have 'type' field.
-            if type is text, then element represents
-            message for user, and the message itself would be
-            in text field.
-            """)
-        tool_prompt = Prompt(
-            """if type is tool, then element represents
-            tool call and field 'args' must follow tool's schema
-            and 'name' field tool's name\n
-            """
-        )
+        self.prompt = Prompt.from_file("prompts/main.md")
+        tool_prompt = Prompt.from_file("prompts/tool_desc.md")
         tool_prompt.bind_visibility(self.show_tools)
         self.prompt.add_part(tool_prompt)
 
