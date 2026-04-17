@@ -24,6 +24,11 @@ class Prompt:
         self._content = ""
         self._show = True
         self._effects: list[Effect] = []
+        self._prefix = ""
+
+    def set_prefix(self, prefix: str):
+        self._prefix = prefix
+        self.make_dirty()
 
     def clean_prompt(self):
         self._text = cleandoc(self._text)
@@ -49,6 +54,7 @@ class Prompt:
         for part in self.parts:
             part_value = part.content()
             if part_value:
+                content += self._prefix
                 content += part_value
                 content += '\n'
         return content

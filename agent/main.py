@@ -35,6 +35,7 @@ class Chat:
 
     def prepare_prompt(self):
         self.prompt = Prompt.from_file("prompts/main.md")
+        self.prompt.set_prefix('\n')
         tool_prompt = Prompt.from_file("prompts/tool_desc.md")
         tool_prompt.bind_visibility(self.show_tools)
         self.prompt.add_part(tool_prompt)
