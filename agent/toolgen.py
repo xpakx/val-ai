@@ -1,7 +1,7 @@
 import inspect
 from typing import Callable, Any
 from dataclasses import dataclass
-from agent.prompt import Prompt
+from agent.prompt.prompt import Prompt
 
 
 class ToolDescription(Prompt):

@@ -1,5 +1,5 @@
 from typing import Protocol, Any, Self
-from agent.signals import Signal, Computed, effect, Effect
+from agent.prompt.signals import Signal, Computed, effect, Effect
 from string import Template
 from inspect import cleandoc
 from pathlib import Path

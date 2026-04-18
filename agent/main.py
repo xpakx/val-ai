@@ -6,8 +6,8 @@ from agent.tools import read_file, list_files, write_file
 from agent.systemparts import current_time
 from agent.systemprompt import get_system_prompt_info, SystemPromptInformation
 from agent.fibonacci import fibonacci_backoff
-from agent.prompt import Prompt
-from agent.signals import signal
+from agent.prompt.prompt import Prompt
+from agent.prompt.signals import signal
 from typing import TypeIs
 
 
