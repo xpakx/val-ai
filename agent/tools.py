@@ -104,3 +104,34 @@ def write_file(path: str, old_str: str, new_str: str) -> str:
             return create_file(file_path, new_str)
     except Exception:
         return "Error: Couldn't write to file!"
+
+
+def glob_files(pattern: str, path: str | None = None) -> str:
+    """
+    Searches for files and directories matching a glob pattern.
+    If no path is provided, searches from the current directory.
+    Supports recursive search using '**' (e.g., '**/*.py').
+    """
+    try:
+        dir_path = get_safe_path(path)
+    except ValueError as e:
+        return f"Error: {e}"
+
+    if not dir_path.is_dir():
+        return "Error: Base path is not a directory"
+
+    try:
+        files = []
+        max_results = 20
+
+        for i, f in enumerate(dir_path.glob(pattern)):
+            if i >= max_results:
+                files.append(f"... [Truncated after {max_results} results]")
+                break
+            rel_path = f.relative_to(dir_path)
+            files.append(f"{rel_path}/" if f.is_dir() else str(rel_path))
+        if not files:
+            return "No files found matching the pattern."
+        return "\n".join(files)
+    except Exception as e:
+        return f"Error: Couldn't execute glob search! {e}"
