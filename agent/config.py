@@ -1,4 +1,5 @@
 import msgspec
+from pathlib import Path
 
 
 class Config(msgspec.Struct, rename="camel"):
@@ -7,9 +8,21 @@ class Config(msgspec.Struct, rename="camel"):
     model: str
 
 
-def load_config(filename: str) -> Config:
-    with open(filename, 'r') as file:
-        data = file.read()
+def load_config(filename: str | Path | None) -> Config:
+    if filename:
+        return load_config_from_file(filename)
+
+    return load_config_from_file('./val.config.json')
+    # TODO: XDG
+
+
+def load_config_from_file(filename: str | Path) -> Config:
+    filepath = Path(filename)
+    if not filepath.is_file():
+        raise FileNotFoundError()
+    data = filepath.read_text()
+    if not data:
+        raise Exception("Couldn't read file")
     try:
         config = msgspec.json.decode(data, type=Config)
         return config

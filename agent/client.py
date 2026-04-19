@@ -111,7 +111,6 @@ class Client:
         response = self.call_api(messages)
         print(response)
         content = response.choices[0].message.content
-        print(content)
         return self._decode(content)
 
     def _decode(self, text: str) -> list[Message]:
