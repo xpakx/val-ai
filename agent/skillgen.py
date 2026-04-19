@@ -47,6 +47,8 @@ class SkillDescription:
 
             sig = inspect.signature(method)
             doc = inspect.getdoc(method)
+            if not doc:
+                continue
             desc = self._get_docstring_description(doc)
 
             md_output.append(f"### `{name}`")
