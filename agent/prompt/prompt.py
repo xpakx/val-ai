@@ -11,7 +11,7 @@ class PromptPart(Protocol):
     def content(self) -> str: ...
     def update(self, context: dict[str, Any]) -> None: ...
     def make_dirty(self) -> None: ...
-    def bind_visibility(self, sig: Signal | Computed) -> None: ...
+    def bind_visibility(self, sig: Signal | Computed) -> Self: ...
 
 
 class Prompt:
@@ -26,17 +26,23 @@ class Prompt:
         self._effects: list[Effect] = []
         self._prefix = ""
 
-    def set_prefix(self, prefix: str):
+    def set_prefix(self, prefix: str) -> None:
         self._prefix = prefix
         self.make_dirty()
 
-    def clean_prompt(self):
+    def clean_prompt(self) -> None:
         self._text = cleandoc(self._text)
 
-    def add_part(self, part: PromptPart):
+    def add_part(self, part: PromptPart) -> Self:
         self.parts.append(part)
         part.parent = self
         self.make_dirty()
+        return self
+
+    def add_parts(self, parts: list[PromptPart]) -> Self:
+        for part in parts:
+            self.add_part(part)
+        return self
 
     def update(self, context: dict[str, Any]) -> None:
         for part in self.parts:
@@ -68,12 +74,13 @@ class Prompt:
         self._show = val
         self.make_dirty()
 
-    def bind_visibility(self, sig: Signal[bool] | Computed[bool]) -> None:
+    def bind_visibility(self, sig: Signal[bool] | Computed[bool]) -> Self:
         eff = effect(
                 lambda val: self.set_visibility(val),
                 [sig]
         )
         self._effects.append(eff)
+        return self
 
     @classmethod
     def from_file(cls, filepath: str | Path) -> Self:
@@ -131,14 +138,15 @@ class TemplatedPrompt(Prompt):
         self.template_dirty = True
 
     def bind_field(
-            self, field: str, sig: Signal[Any] | Computed[Any]) -> None:
+            self, field: str, sig: Signal[Any] | Computed[Any]) -> Self:
         if field not in self._defaults:
-            return
+            return self
         eff = effect(
                 lambda val: self.set_field(field, val),
                 [sig]
         )
         self._effects.append(eff)
+        return self
 
     @classmethod
     def from_file(cls, filepath: str | Path) -> Self:
