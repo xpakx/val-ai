@@ -51,6 +51,7 @@ class Client:
             "Authorization": f"Bearer {config.api_key}"
         }
         self.backoff = backoff
+        self._temperature = 0.7
 
     def set_backoff(self, backoff: Callable):
         self.backoff = backoff
@@ -58,13 +59,16 @@ class Client:
     def unset_backoff(self):
         self.backoff = None
 
+    def completion_url(self) -> str:
+        return f'{self.config.provider}chat/completions'
+
     def call_backoff(
             self, payload: dict[str, Any]) -> requests.Response | None:
         if not self.backoff:
             return None
         return self.backoff(
                 lambda: requests.post(
-                        f'{self.config.provider}chat/completions',
+                        self.completion_url(),
                         headers=self.headers,
                         json=payload
                 ),
@@ -75,14 +79,14 @@ class Client:
         payload = {
             "model": self.config.model,
             "messages": messages,
-            "temperature": 0.7
+            "temperature": self._temperature,
         }
 
         if self.backoff:
             response = self.call_backoff(payload)
         else:
             response = requests.post(
-                f'{self.config.provider}chat/completions',
+                self.completion_url(),
                 headers=self.headers,
                 json=payload
             )
