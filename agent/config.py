@@ -19,9 +19,16 @@ def finalize_config(cfg: RawConfig) -> Config:
     return msgspec.convert(msgspec.structs.asdict(cfg), Config)
 
 
+def overwrite_from_env(cfg: RawConfig) -> None:
+    for field in cfg.__struct_fields__:
+        env_val = os.environ.get(f"VAL_{field.upper()}")
+        if env_val:
+            setattr(cfg, field, env_val)
+
+
 def load_config(filename: str | Path | None) -> Config:
     conf = check_files(filename)
-    # TODO: env variables
+    overwrite_from_env(conf)
     return finalize_config(conf)
 
 
