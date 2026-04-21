@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 class ContextMessage:
     author: Role
     msg: PromptPart | str
+    hidden: bool = False
     timestamp: datetime = field(default_factory=datetime.now)
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
@@ -33,10 +34,18 @@ class Context:
         )
 
     def get_messages(self) -> list[ChatMessage]:
-        return [x.as_msg() for x in self.messages]
+        return [x.as_msg() for x in self.messages if not x.hidden]
+
+    def hide_message(self, id: str) -> None:
+        for msg in self.messages:
+            if msg.id == id:
+                msg.hidden = True
+                return
 
 
 if __name__ == "__main__":
     ctx = Context()
     ctx.push("user", "test")
-    print(ctx.get_messages())
+    ctx.push("user", "test2")
+    ctx.hide_message(ctx.messages[1].id)
+    ctx.messages[1].hidden = False
