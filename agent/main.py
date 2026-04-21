@@ -5,7 +5,7 @@ from agent.ui import UIProvider, CLIProvider
 from agent.tools import read_file, list_files, write_file
 from agent.systemparts import current_time
 from agent.systemprompt import get_system_prompt_info, SystemPromptInformation
-from agent.client.fibonacci import fibonacci_backoff
+from agent.client.backoff import fibonacci_backoff
 from agent.prompt import Prompt
 from agent.prompt.signals import signal
 from typing import TypeIs
