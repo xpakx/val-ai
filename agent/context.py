@@ -24,6 +24,7 @@ class ContextMessage:
 class Context:
     def __init__(self):
         self.messages: list[ContextMessage] = []
+        self.reset_point = 0
 
     def push(self, author: Role, msg: PromptPart | str) -> None:
         self.messages.append(
@@ -41,6 +42,14 @@ class Context:
             if msg.id == id:
                 msg.hidden = True
                 return
+
+    def freeze(self) -> None:
+        self.reset_point = len(self.messages)
+
+    def reset(self) -> None:
+        if self.reset_point <= 0:
+            return
+        self.messages = self.messages[0:self.reset_point]
 
 
 if __name__ == "__main__":
