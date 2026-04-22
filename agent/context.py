@@ -55,6 +55,11 @@ class Context:
 if __name__ == "__main__":
     ctx = Context()
     ctx.push("user", "test")
+    ctx.freeze()
     ctx.push("user", "test2")
     ctx.hide_message(ctx.messages[1].id)
+    print(ctx.get_messages())
     ctx.messages[1].hidden = False
+    print(ctx.get_messages())
+    ctx.reset()
+    print(ctx.get_messages())
