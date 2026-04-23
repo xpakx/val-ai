@@ -18,6 +18,7 @@ project-includes = [
 [dependency-groups]
 dev = [
     "pyrefly>=0.60.0",
+    "types-requests>=2.33.0.20260408",
 ]
 
 [build-system]
