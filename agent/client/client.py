@@ -53,10 +53,13 @@ class Client:
         self.backoff = backoff
         self._temperature = 0.7
 
-    def set_backoff(self, backoff: Callable):
+    def set_temperature(self, temp: float) -> None:
+        self._temperature = max(0.0, min(1.0, temp))
+
+    def set_backoff(self, backoff: Callable) -> None:
         self.backoff = backoff
 
-    def unset_backoff(self):
+    def unset_backoff(self) -> None:
         self.backoff = None
 
     def completion_url(self) -> str:
