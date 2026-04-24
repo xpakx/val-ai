@@ -8,6 +8,7 @@ from agent.systemprompt import get_system_prompt_info, SystemPromptInformation
 from agent.client.backoff import fibonacci_backoff
 from agent.prompt import Prompt
 from agent.prompt.signals import signal
+from agent.context import Context
 from typing import TypeIs
 
 
@@ -27,7 +28,7 @@ class Chat:
     ):
         self.client = client
         self.tools: dict[str, ToolDefinition] = {}
-        self.conversation: list[ChatMessage] = []
+        self.conversation = Context()
         self.system_prompt_parts: list[SystemPromptInformation] = []
         self.ui = ui
         self.show_tools = signal(True)
@@ -57,14 +58,8 @@ class Chat:
         return self.prompt.content()
 
     def run(self):
-        self.conversation = []
-        print(self.get_sys())
-        self.conversation.append({
-            "role": "system",
-            "content": self.get_sys()
-
-        })
-        self.ui.debug(self.conversation)
+        self.conversation.push('system', self.get_sys())
+        self.ui.debug(self.conversation.get_messages())
         self.read_user_input = True
         while (True):
             cont = self.step()
@@ -77,7 +72,7 @@ class Chat:
             return False
         if (user_prompt in ["quit", "exit"]):
             return False
-        self.conversation.append({"role": "user", "content": user_prompt})
+        self.conversation.push("user", user_prompt)
         return True
 
     def step(self):
@@ -86,35 +81,32 @@ class Chat:
             if (not cont):
                 return False
 
-        ai = self.client.ask(self.conversation)
+        ai = self.client.ask(self.conversation.get_messages())
         self.ui.debug(ai)
         toolResults = []
         for part in ai:
             if is_text_msg(part):
-                self.conversation.append({
-                    "role": "assistant",
-                    "content": part.text
-                })
+                self.conversation.push("assistant", part.text)
                 self.ui.say("Agent", part.text)
             else:
                 self.ui.debug('tool call')
                 toolResult = self.call_tool(part)
                 self.ui.debug(toolResult)
-                self.conversation.append({
-                    "role": "assistant",
-                    "content": f"tool call: {part.name}, {part.args}"
-                })
+                self.conversation.push(
+                    "assistant",
+                    f"tool call: {part.name}, {part.args}"
+                )
                 toolResults.append(toolResult)
         if len(toolResults) == 0:
             self.read_user_input = True
             return True
         self.read_user_input = False
 
-        self.conversation.append(
-                {"role": "user",
-                 "content": "\n".join(toolResults)}
+        self.conversation.push(
+                "user",
+                "\n".join(toolResults)
         )
-        self.ui.debug(self.conversation)
+        self.ui.debug(self.conversation.get_messages())
         return True
 
     def add_tool(self, tool: ToolDefinition):
