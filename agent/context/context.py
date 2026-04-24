@@ -28,7 +28,7 @@ class Context:
         self.messages: list[ContextMessage] = []
         self.reset_point = 0
 
-    def push(self, author: Role, msg: PromptPart | str) -> ChatMessage:
+    def push(self, author: Role, msg: PromptPart | str) -> ContextMessage:
         new_msg = ContextMessage(
                     author=author,
                     msg=msg,
