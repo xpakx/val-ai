@@ -86,17 +86,9 @@ class Chat:
         toolResults = []
         for part in ai:
             if is_text_msg(part):
-                self.conversation.push("assistant", part.text)
-                self.ui.say("Agent", part.text)
+                self.process_text_msg(part)
             else:
-                self.ui.debug('tool call')
-                toolResult = self.call_tool(part)
-                self.ui.debug(toolResult)
-                self.conversation.push(
-                    "assistant",
-                    f"tool call: {part.name}, {part.args}"
-                )
-                toolResults.append(toolResult)
+                self.process_tool_call(part, toolResults)
         if len(toolResults) == 0:
             self.read_user_input = True
             return True
@@ -108,6 +100,20 @@ class Chat:
         )
         self.ui.debug(self.conversation.get_messages())
         return True
+
+    def process_text_msg(self, msg: TextMessage):
+        self.conversation.push("assistant", msg.text)
+        self.ui.say("Agent", msg.text)
+
+    def process_tool_call(self, call: ToolCall, results: list):
+        self.ui.debug('tool call')
+        toolResult = self.call_tool(call)
+        self.ui.debug(toolResult)
+        self.conversation.push(
+            "assistant",
+            f"tool call: {call.name}, {call.args}"
+        )
+        results.append(toolResult)
 
     def add_tool(self, tool: ToolDefinition):
         self.tools[tool.name] = tool
