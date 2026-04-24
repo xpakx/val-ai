@@ -21,18 +21,20 @@ class ContextMessage:
         return {'role': self.author, 'content': msg}
 
 
+# TODO: save_context and restore_context
+# TODO: git-like tree of messages
 class Context:
     def __init__(self):
         self.messages: list[ContextMessage] = []
         self.reset_point = 0
 
-    def push(self, author: Role, msg: PromptPart | str) -> None:
-        self.messages.append(
-                ContextMessage(
+    def push(self, author: Role, msg: PromptPart | str) -> ChatMessage:
+        new_msg = ContextMessage(
                     author=author,
                     msg=msg,
-                )
         )
+        self.messages.append(new_msg)
+        return new_msg
 
     def get_messages(self) -> list[ChatMessage]:
         return [x.as_msg() for x in self.messages if not x.hidden]
@@ -41,6 +43,12 @@ class Context:
         for msg in self.messages:
             if msg.id == id:
                 msg.hidden = True
+                return
+
+    def show_message(self, id: str) -> None:
+        for msg in self.messages:
+            if msg.id == id:
+                msg.hidden = False
                 return
 
     def freeze(self) -> None:
@@ -56,10 +64,10 @@ if __name__ == "__main__":
     ctx = Context()
     ctx.push("user", "test")
     ctx.freeze()
-    ctx.push("user", "test2")
-    ctx.hide_message(ctx.messages[1].id)
+    msg = ctx.push("user", "test2")
+    ctx.hide_message(msg.id)
     print(ctx.get_messages())
-    ctx.messages[1].hidden = False
+    ctx.show_message(msg.id)
     print(ctx.get_messages())
     ctx.reset()
     print(ctx.get_messages())
