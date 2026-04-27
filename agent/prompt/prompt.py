@@ -39,6 +39,11 @@ class Prompt:
         self.make_dirty()
         return self
 
+    def remove_part(self, part: PromptPart) -> Self:
+        self.parts.remove(part)
+        self.make_dirty()
+        return self
+
     def add_parts(self, parts: list[PromptPart]) -> Self:
         for part in parts:
             self.add_part(part)
