@@ -26,6 +26,7 @@ class ContextMessage:
 class Context:
     def __init__(self):
         self.messages: list[ContextMessage] = []
+        self.msg_by_id: dict[str, ContextMessage] = {}
         self.reset_point = 0
 
     def push(self, author: Role, msg: PromptPart | str) -> ContextMessage:
@@ -34,22 +35,21 @@ class Context:
                     msg=msg,
         )
         self.messages.append(new_msg)
+        self.msg_by_id[new_msg.id] = new_msg
         return new_msg
 
     def get_messages(self) -> list[ChatMessage]:
         return [x.as_msg() for x in self.messages if not x.hidden]
 
     def hide_message(self, id: str) -> None:
-        for msg in self.messages:
-            if msg.id == id:
-                msg.hidden = True
-                return
+        if id not in self.msg_by_id:
+            return
+        self.msg_by_id[id].hidden = True
 
     def show_message(self, id: str) -> None:
-        for msg in self.messages:
-            if msg.id == id:
-                msg.hidden = False
-                return
+        if id not in self.msg_by_id:
+            return
+        self.msg_by_id[id].hidden = False
 
     def freeze(self) -> None:
         self.reset_point = len(self.messages)
@@ -58,6 +58,9 @@ class Context:
         if self.reset_point <= 0:
             return
         self.messages = self.messages[0:self.reset_point]
+        self.msg_by_id = {}
+        for msg in self.messages:
+            self.msg_by_id[msg.id] = msg
 
 
 if __name__ == "__main__":
