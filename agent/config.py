@@ -64,12 +64,17 @@ def load_config_from_file(filepath:  Path) -> RawConfig:
 def get_xdg(var: str, default: str) -> Path:
     path_str = os.environ.get(var)
     if path_str:
-        path_str = Path(path_str)
+        path = Path(path_str)
     else:
-        path_str = Path.home() / default
-    path = path_str / 'val'
+        path = Path.home() / default
     return path
 
 
 def get_xdg_config_location() -> Path:
-    return get_xdg('XDG_CONFIG_HOME', '.config')
+    path = get_xdg('XDG_CONFIG_HOME', '.config')
+    path = path / 'val'
+    return path
+
+
+def get_xdg_data_location() -> Path:
+    return get_xdg('XDG_DATA_HOME', '.local/share')
