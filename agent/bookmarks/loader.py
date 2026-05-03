@@ -1,7 +1,12 @@
 from pathlib import Path
 from configparser import ConfigParser
+import sqlite3
+from datetime import datetime, timedelta
 
 from agent.config import get_xdg_data_location
+
+
+PRIME_EPOCH = datetime(1970, 1, 1)
 
 
 def find_firefox_data() -> Path:
@@ -44,12 +49,73 @@ def find_default_profile(config: ConfigParser, root_path: Path) -> str | None:
             return default_profile_path
 
 
-def find_firefox_profile() -> Path:
+def find_firefox_db() -> Path:
     root_path = find_firefox_data()
     config = load_ini_file(root_path)
     profile = find_default_profile(config, root_path)
-    print(profile)
+    db_path = profile / "places.sqlite"
+    if not db_path.exists():
+        raise FileNotFoundError(
+                f"places.sqlite not found in the profile path: {profile}"
+        )
+
+    return db_path
+
+
+def prtime_to_datetime(pr_time: int) -> str:
+    if pr_time is None:
+        return ""
+    dt = PRIME_EPOCH + timedelta(microseconds=pr_time)
+    return dt.strftime("%Y-%m-%d %H:%M:%S UTC")
+
+
+def get_bookmarks(db_path: Path) -> list:
+    print(f"Connecting to database: {db_path}")
+    try:
+        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        cursor = conn.cursor()
+    except sqlite3.OperationalError as e:
+        if "database is locked" in str(e):
+            raise Exception("WARNING: The database is locked. Ensure Firefox is closed or try again.")
+
+    SQL_QUERY = """
+    SELECT
+        p.title,
+        p.url,
+        b.dateAdded,
+        p.rev_host
+    FROM
+        moz_bookmarks b
+    JOIN
+        moz_places p ON b.fk = p.id
+    WHERE
+        b.type = 1 AND p.url IS NOT NULL
+        AND b.dateAdded > (strftime('%s', 'now') * 1000000 - 86400000000)
+    ORDER BY
+        b.dateAdded DESC;
+    """
+
+    bookmarks = []
+    try:
+        cursor.execute(SQL_QUERY)
+        for title, url, date_added_prtime, _ in cursor:
+            if url.startswith("place:"):
+                continue
+            clean_title = title.strip() if title else url
+            # TODO: better typing
+            bookmarks.append({
+                "title": clean_title,
+                "url": url,
+                "added": prtime_to_datetime(date_added_prtime),
+                "timestamp": date_added_prtime
+            })
+    finally:
+        conn.close()
+
+    print(f"Extracted {len(bookmarks)} bookmarks.")
+    return bookmarks
 
 
 if __name__ == "__main__":
-    find_firefox_profile()
+    db = find_firefox_db()
+    print(get_bookmarks(db))
