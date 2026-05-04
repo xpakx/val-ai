@@ -1,12 +1,20 @@
 from pathlib import Path
 from configparser import ConfigParser
 import sqlite3
+import msgspec
 from datetime import datetime, timedelta
 
 from agent.config import get_xdg_data_location
 
 
 PRIME_EPOCH = datetime(1970, 1, 1)
+
+
+class BookmarkData(msgspec.Struct):
+    title: str
+    url: str
+    added: str
+    timestamp: int
 
 
 def find_firefox_data() -> Path:
@@ -69,7 +77,7 @@ def prtime_to_datetime(pr_time: int) -> str:
     return dt.strftime("%Y-%m-%d %H:%M:%S UTC")
 
 
-def get_bookmarks(db_path: Path) -> list:
+def get_bookmarks(db_path: Path) -> list[BookmarkData]:
     print(f"Connecting to database: {db_path}")
     try:
         conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
@@ -78,6 +86,8 @@ def get_bookmarks(db_path: Path) -> list:
         if "database is locked" in str(e):
             raise Exception("WARNING: The database is locked. Ensure Firefox is closed or try again.")
 
+    # TODO: more options/strategies for extraction
+    # MAYBE: clean after extraction
     SQL_QUERY = """
     SELECT
         p.title,
@@ -103,12 +113,14 @@ def get_bookmarks(db_path: Path) -> list:
                 continue
             clean_title = title.strip() if title else url
             # TODO: better typing
-            bookmarks.append({
-                "title": clean_title,
-                "url": url,
-                "added": prtime_to_datetime(date_added_prtime),
-                "timestamp": date_added_prtime
-            })
+            bookmarks.append(
+                    BookmarkData(
+                        title=clean_title,
+                        url=url,
+                        added=prtime_to_datetime(date_added_prtime),
+                        timestamp=date_added_prtime,
+                    )
+            )
     finally:
         conn.close()
 
