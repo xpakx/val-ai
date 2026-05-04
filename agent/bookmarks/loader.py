@@ -130,6 +130,56 @@ def get_bookmarks(db_path: Path) -> list[BookmarkData]:
     return bookmarks
 
 
+def get_bookmarks_by_name(db_path: Path, name: str) -> list[BookmarkData]:
+    print(f"Connecting to database: {db_path}")
+    try:
+        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        cursor = conn.cursor()
+    except sqlite3.OperationalError as e:
+        if "database is locked" in str(e):
+            raise Exception("WARNING: The database is locked. Ensure Firefox is closed or try again.")
+
+    SQL_QUERY = f"""
+    SELECT
+        p.title,
+        p.url,
+        b.dateAdded,
+        p.rev_host
+    FROM
+        moz_bookmarks b
+    JOIN
+        moz_places p ON b.fk = p.id
+    WHERE
+        b.type = 1 AND p.url IS NOT NULL
+        AND p.title LIKE '%{name}%'
+    ORDER BY
+        b.dateAdded DESC;
+    """
+
+    bookmarks = []
+    try:
+        cursor.execute(SQL_QUERY)
+        for title, url, date_added_prtime, rev_domain in cursor:
+            if url.startswith("place:"):
+                continue
+            clean_title = title.strip() if title else url
+            # TODO: better typing
+            bookmarks.append(
+                    BookmarkData(
+                        title=clean_title,
+                        url=url,
+                        added=prtime_to_datetime(date_added_prtime),
+                        timestamp=date_added_prtime,
+                        rev_domain=rev_domain,
+                    )
+            )
+    finally:
+        conn.close()
+
+    print(f"Extracted {len(bookmarks)} bookmarks.")
+    return bookmarks
+
+
 if __name__ == "__main__":
     db = find_firefox_db()
     print(get_bookmarks(db))
