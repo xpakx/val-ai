@@ -15,6 +15,7 @@ class BookmarkData(msgspec.Struct):
     url: str
     added: str
     timestamp: int
+    rev_domain: int
 
 
 def find_firefox_data() -> Path:
@@ -108,7 +109,7 @@ def get_bookmarks(db_path: Path) -> list[BookmarkData]:
     bookmarks = []
     try:
         cursor.execute(SQL_QUERY)
-        for title, url, date_added_prtime, _ in cursor:
+        for title, url, date_added_prtime, rev_domain in cursor:
             if url.startswith("place:"):
                 continue
             clean_title = title.strip() if title else url
@@ -119,6 +120,7 @@ def get_bookmarks(db_path: Path) -> list[BookmarkData]:
                         url=url,
                         added=prtime_to_datetime(date_added_prtime),
                         timestamp=date_added_prtime,
+                        rev_domain=rev_domain,
                     )
             )
     finally:
