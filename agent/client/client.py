@@ -1,45 +1,11 @@
 import msgspec
-from typing import TypedDict, Literal, Callable, Any
+from typing import Literal, Callable, Any
 from agent.config import Config
+from agent.client.typedefs import (
+        ChatMessage, OpenAIResponse,
+        Message, TextMessage
+)
 import requests
-
-
-Role = Literal["system", "user", "assistant"]
-
-
-class ChatMessage(TypedDict):
-    role: Role
-    content: str
-
-
-class Base(msgspec.Struct, tag_field="type"):
-    pass
-
-
-class TextMessage(Base, tag="text"):
-    type = "text"
-    text: str
-
-
-class ToolCall(Base, tag="tool"):
-    type = "tool"
-    name: str
-    args: dict[str, str]
-
-
-Message = TextMessage | ToolCall
-
-
-class OpenAIMessage(msgspec.Struct):
-    content: str
-
-
-class OpenAIChoice(msgspec.Struct):
-    message: OpenAIMessage
-
-
-class OpenAIResponse(msgspec.Struct):
-    choices: list[OpenAIChoice]
 
 
 # TODO: native tool call if model supports them
