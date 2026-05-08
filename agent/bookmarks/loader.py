@@ -83,31 +83,26 @@ def get_bookmarks(db_path: Path) -> list[BookmarkData]:
     try:
         conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
         cursor = conn.cursor()
-    except sqlite3.OperationalError as e:
-        if "database is locked" in str(e):
-            raise Exception("WARNING: The database is locked. Ensure Firefox is closed or try again.")
+        # TODO: more options/strategies for extraction
+        # MAYBE: clean after extraction
+        SQL_QUERY = """
+        SELECT
+            p.title,
+            p.url,
+            b.dateAdded,
+            p.rev_host
+        FROM
+            moz_bookmarks b
+        JOIN
+            moz_places p ON b.fk = p.id
+        WHERE
+            b.type = 1 AND p.url IS NOT NULL
+            AND b.dateAdded > (strftime('%s', 'now') * 1000000 - 86400000000)
+        ORDER BY
+            b.dateAdded DESC;
+        """
 
-    # TODO: more options/strategies for extraction
-    # MAYBE: clean after extraction
-    SQL_QUERY = """
-    SELECT
-        p.title,
-        p.url,
-        b.dateAdded,
-        p.rev_host
-    FROM
-        moz_bookmarks b
-    JOIN
-        moz_places p ON b.fk = p.id
-    WHERE
-        b.type = 1 AND p.url IS NOT NULL
-        AND b.dateAdded > (strftime('%s', 'now') * 1000000 - 86400000000)
-    ORDER BY
-        b.dateAdded DESC;
-    """
-
-    bookmarks = []
-    try:
+        bookmarks = []
         cursor.execute(SQL_QUERY)
         for title, url, date_added_prtime, rev_domain in cursor:
             if url.startswith("place:"):
@@ -123,6 +118,10 @@ def get_bookmarks(db_path: Path) -> list[BookmarkData]:
                         rev_domain=rev_domain,
                     )
             )
+    except sqlite3.OperationalError as e:
+        if "database is locked" in str(e):
+            raise Exception("WARNING: The database is locked. Ensure Firefox is closed or try again.")
+
     finally:
         conn.close()
 
@@ -135,35 +134,30 @@ def get_bookmarks_by_name(db_path: Path, name: str) -> list[BookmarkData]:
     try:
         conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
         cursor = conn.cursor()
-    except sqlite3.OperationalError as e:
-        if "database is locked" in str(e):
-            raise Exception("WARNING: The database is locked. Ensure Firefox is closed or try again.")
 
-    SQL_QUERY = f"""
-    SELECT
-        p.title,
-        p.url,
-        b.dateAdded,
-        p.rev_host
-    FROM
-        moz_bookmarks b
-    JOIN
-        moz_places p ON b.fk = p.id
-    WHERE
-        b.type = 1 AND p.url IS NOT NULL
-        AND p.title LIKE '%{name}%'
-    ORDER BY
-        b.dateAdded DESC;
-    """
+        SQL_QUERY = f"""
+        SELECT
+            p.title,
+            p.url,
+            b.dateAdded,
+            p.rev_host
+        FROM
+            moz_bookmarks b
+        JOIN
+            moz_places p ON b.fk = p.id
+        WHERE
+            b.type = 1 AND p.url IS NOT NULL
+            AND p.title LIKE '%{name}%'
+        ORDER BY
+            b.dateAdded DESC;
+        """
 
-    bookmarks = []
-    try:
+        bookmarks = []
         cursor.execute(SQL_QUERY)
         for title, url, date_added_prtime, rev_domain in cursor:
             if url.startswith("place:"):
                 continue
             clean_title = title.strip() if title else url
-            # TODO: better typing
             bookmarks.append(
                     BookmarkData(
                         title=clean_title,
@@ -173,6 +167,9 @@ def get_bookmarks_by_name(db_path: Path, name: str) -> list[BookmarkData]:
                         rev_domain=rev_domain,
                     )
             )
+    except sqlite3.OperationalError as e:
+        if "database is locked" in str(e):
+            raise Exception("WARNING: The database is locked. Ensure Firefox is closed or try again.")
     finally:
         conn.close()
 
