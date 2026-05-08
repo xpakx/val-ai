@@ -78,14 +78,20 @@ def prtime_to_datetime(pr_time: int) -> str:
     return dt.strftime("%Y-%m-%d %H:%M:%S UTC")
 
 
-def get_bookmarks(db_path: Path) -> list[BookmarkData]:
-    print(f"Connecting to database: {db_path}")
-    try:
-        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
-        cursor = conn.cursor()
-        # TODO: more options/strategies for extraction
-        # MAYBE: clean after extraction
-        SQL_QUERY = """
+def last_24h_query() -> str:
+    return prepare_query(
+            "b.dateAdded > (strftime('%s', 'now') * 1000000 - 86400000000)"
+    )
+
+
+def in_name_query(name: str) -> str:
+    return prepare_query(
+            f"p.title LIKE '%{name}%'"
+    )
+
+
+def prepare_query(condition: str) -> str:
+    SQL_QUERY = f"""
         SELECT
             p.title,
             p.url,
@@ -97,18 +103,27 @@ def get_bookmarks(db_path: Path) -> list[BookmarkData]:
             moz_places p ON b.fk = p.id
         WHERE
             b.type = 1 AND p.url IS NOT NULL
-            AND b.dateAdded > (strftime('%s', 'now') * 1000000 - 86400000000)
+            AND {condition}
         ORDER BY
             b.dateAdded DESC;
         """
+    return SQL_QUERY
 
+
+def get_bookmarks(db_path: Path) -> list[BookmarkData]:
+    print(f"Connecting to database: {db_path}")
+    try:
+        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        cursor = conn.cursor()
+        # TODO: more options/strategies for extraction
+        # MAYBE: clean after extraction
+        SQL_QUERY = last_24h_query()
         bookmarks = []
         cursor.execute(SQL_QUERY)
         for title, url, date_added_prtime, rev_domain in cursor:
             if url.startswith("place:"):
                 continue
             clean_title = title.strip() if title else url
-            # TODO: better typing
             bookmarks.append(
                     BookmarkData(
                         title=clean_title,
@@ -134,23 +149,7 @@ def get_bookmarks_by_name(db_path: Path, name: str) -> list[BookmarkData]:
     try:
         conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
         cursor = conn.cursor()
-
-        SQL_QUERY = f"""
-        SELECT
-            p.title,
-            p.url,
-            b.dateAdded,
-            p.rev_host
-        FROM
-            moz_bookmarks b
-        JOIN
-            moz_places p ON b.fk = p.id
-        WHERE
-            b.type = 1 AND p.url IS NOT NULL
-            AND p.title LIKE '%{name}%'
-        ORDER BY
-            b.dateAdded DESC;
-        """
+        SQL_QUERY = in_name_query(name)
 
         bookmarks = []
         cursor.execute(SQL_QUERY)
