@@ -110,16 +110,14 @@ def prepare_query(condition: str) -> str:
     return SQL_QUERY
 
 
-def get_bookmarks(db_path: Path) -> list[BookmarkData]:
-    print(f"Connecting to database: {db_path}")
+def fetch_bookmarks_from_db(db_path: str, query: str) -> list[BookmarkData]:
     try:
+        print(f"Connecting to database: {db_path}")
         conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
         cursor = conn.cursor()
-        # TODO: more options/strategies for extraction
-        # MAYBE: clean after extraction
-        SQL_QUERY = last_24h_query()
+
         bookmarks = []
-        cursor.execute(SQL_QUERY)
+        cursor.execute(query)
         for title, url, date_added_prtime, rev_domain in cursor:
             if url.startswith("place:"):
                 continue
@@ -133,45 +131,24 @@ def get_bookmarks(db_path: Path) -> list[BookmarkData]:
                         rev_domain=rev_domain,
                     )
             )
+        return bookmarks
     except sqlite3.OperationalError as e:
         if "database is locked" in str(e):
             raise Exception("WARNING: The database is locked. Ensure Firefox is closed or try again.")
-
     finally:
         conn.close()
 
+
+def get_bookmarks(db_path: Path) -> list[BookmarkData]:
+    query = last_24h_query()
+    bookmarks = fetch_bookmarks_from_db(db_path, query)
     print(f"Extracted {len(bookmarks)} bookmarks.")
     return bookmarks
 
 
 def get_bookmarks_by_name(db_path: Path, name: str) -> list[BookmarkData]:
-    print(f"Connecting to database: {db_path}")
-    try:
-        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
-        cursor = conn.cursor()
-        SQL_QUERY = in_name_query(name)
-
-        bookmarks = []
-        cursor.execute(SQL_QUERY)
-        for title, url, date_added_prtime, rev_domain in cursor:
-            if url.startswith("place:"):
-                continue
-            clean_title = title.strip() if title else url
-            bookmarks.append(
-                    BookmarkData(
-                        title=clean_title,
-                        url=url,
-                        added=prtime_to_datetime(date_added_prtime),
-                        timestamp=date_added_prtime,
-                        rev_domain=rev_domain,
-                    )
-            )
-    except sqlite3.OperationalError as e:
-        if "database is locked" in str(e):
-            raise Exception("WARNING: The database is locked. Ensure Firefox is closed or try again.")
-    finally:
-        conn.close()
-
+    query = in_name_query(name)
+    bookmarks = fetch_bookmarks_from_db(db_path, query)
     print(f"Extracted {len(bookmarks)} bookmarks.")
     return bookmarks
 
