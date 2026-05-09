@@ -6,6 +6,7 @@ from agent.bookmarks.loader import BookmarkData
 class ProcessAction(Protocol):
     def process(self, bookmark: BookmarkData) -> None: ...
     def compare(self, bookmark: BookmarkData) -> bool: ...
+    def then(self, other: "ProcessAction") -> "ProcessAction": ...
 
 
 class BookmarkExtractor:
@@ -23,24 +24,53 @@ class BookmarkExtractor:
             if action.compare(bookmark):
                 action.process(bookmark)
 
-    def add_action(self, action: ProcessAction):
+    def add_action(self, action: ProcessAction) -> ProcessAction:
         self.actions.append(action)
+        return action
 
 
 class PrintAction:
     def __init__(self):
-        self.domain = None
+        self.next: ProcessAction | None = None
 
     def process(self, bookmark: BookmarkData) -> None:
         print(bookmark.title)
         print(bookmark.url)
         print(bookmark.rev_domain)
 
+        if self.next:
+            self.next.process(bookmark)
+
     def compare(self, bookmark: BookmarkData) -> bool:
         return True
+
+    def then(self, other: ProcessAction) -> ProcessAction:
+        self.next = other
+        return other
+
+
+class FilterAction:
+    def __init__(self, domain: str):
+        self.next: ProcessAction | None = None
+        self.domain = domain
+
+    def process(self, bookmark: BookmarkData) -> None:
+        if self.next:
+            self.next.process(bookmark)
+
+    def compare(self, bookmark: BookmarkData) -> bool:
+        return bookmark.url.find(self.domain) > 0
+
+    def then(self, other: ProcessAction) -> ProcessAction:
+        self.next = other
+        return other
 
 
 if __name__ == "__main__":
     bookmarks = BookmarkExtractor()
-    bookmarks.add_action(PrintAction())
+    (
+            bookmarks
+            .add_action(FilterAction("youtube.com"))
+            .then(PrintAction())
+    )
     bookmarks.process()
