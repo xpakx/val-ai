@@ -1,11 +1,12 @@
-from typing import Protocol
+from typing import Protocol, Self
 from agent.bookmarks.loader import find_firefox_db, get_bookmarks
 from agent.bookmarks.loader import BookmarkData
+import msgspec
 
 
 class ProcessAction(Protocol):
     def process(self, bookmark: BookmarkData) -> None: ...
-    def then(self, other: "ProcessAction") -> "ProcessAction": ...
+    def then(self, other: Self) -> Self: ...
 
 
 class BookmarkExtractor:
@@ -63,11 +64,23 @@ class FilterAction(BaseAction):
         return b_rev.startswith(self.rev_domain)
 
 
+class RemoveSuffixAction(BaseAction):
+    def __init__(self, suffix: str):
+        self.suffix = suffix
+        super().__init__()
+
+    def process(self, bookmark: BookmarkData) -> None:
+        title = bookmark.title.removesuffix(self.suffix).strip()
+        b = msgspec.structs.replace(bookmark, title=title)
+        super().process(b)
+
+
 if __name__ == "__main__":
     bookmarks = BookmarkExtractor()
     (
             bookmarks
             .add_action(FilterAction("youtube.com"))
+            .then(RemoveSuffixAction("- Youtube"))
             .then(PrintAction())
     )
     bookmarks.process()

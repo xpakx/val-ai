@@ -1,5 +1,6 @@
 from pathlib import Path
 from configparser import ConfigParser
+from typing import Self
 import sqlite3
 import msgspec
 from datetime import datetime, timedelta
@@ -15,7 +16,7 @@ class BookmarkData(msgspec.Struct):
     url: str
     added: str
     timestamp: int
-    rev_domain: int
+    rev_domain: str
 
 
 def find_firefox_data() -> Path:
