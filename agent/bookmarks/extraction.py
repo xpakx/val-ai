@@ -5,7 +5,6 @@ from agent.bookmarks.loader import BookmarkData
 
 class ProcessAction(Protocol):
     def process(self, bookmark: BookmarkData) -> None: ...
-    def compare(self, bookmark: BookmarkData) -> bool: ...
     def then(self, other: "ProcessAction") -> "ProcessAction": ...
 
 
@@ -21,51 +20,47 @@ class BookmarkExtractor:
 
     def process_bookmark(self, bookmark: BookmarkData):
         for action in self.actions:
-            if action.compare(bookmark):
-                action.process(bookmark)
+            action.process(bookmark)
 
     def add_action(self, action: ProcessAction) -> ProcessAction:
         self.actions.append(action)
         return action
 
 
-class PrintAction:
+class BaseAction:
     def __init__(self):
         self.next: ProcessAction | None = None
 
     def process(self, bookmark: BookmarkData) -> None:
-        print(bookmark.title)
-        print(bookmark.url)
-        print(bookmark.rev_domain)
-
         if self.next:
             self.next.process(bookmark)
-
-    def compare(self, bookmark: BookmarkData) -> bool:
-        return True
 
     def then(self, other: ProcessAction) -> ProcessAction:
         self.next = other
         return other
 
 
-class FilterAction:
+class PrintAction(BaseAction):
+    def process(self, bookmark: BookmarkData) -> None:
+        print(bookmark.title)
+        print(bookmark.url)
+        print(bookmark.rev_domain)
+        super().process(bookmark)
+
+
+class FilterAction(BaseAction):
     def __init__(self, domain: str):
-        self.next: ProcessAction | None = None
         self.domain = domain
         self.rev_domain = domain[::-1] + '.'
+        super().__init__()
 
-    def process(self, bookmark: BookmarkData) -> None:
-        if self.next:
+    def process(self, bookmark) -> None:
+        if self.next and self.compare(bookmark):
             self.next.process(bookmark)
 
     def compare(self, bookmark: BookmarkData) -> bool:
         b_rev = bookmark.rev_domain
         return b_rev.startswith(self.rev_domain)
-
-    def then(self, other: ProcessAction) -> ProcessAction:
-        self.next = other
-        return other
 
 
 if __name__ == "__main__":
