@@ -1,6 +1,6 @@
 from typing import Protocol, Self
-from agent.bookmarks.loader import find_firefox_db, get_bookmarks
-from agent.bookmarks.loader import BookmarkData
+from agent.bookmarks.loader import FirefoxBookmarkBridge
+from agent.bookmarks.loader import BookmarkData, DbBridge
 import msgspec
 
 
@@ -10,12 +10,12 @@ class ProcessAction(Protocol):
 
 
 class BookmarkExtractor:
-    def __init__(self):
-        self.db = find_firefox_db()
+    def __init__(self, db: DbBridge):
+        self.bridge: DbBridge = db
         self.actions: list[ProcessAction] = []
 
     def process(self):
-        bookmarks = get_bookmarks(self.db)
+        bookmarks = self.bridge.fetch_bookmarks()
         for bookmark in bookmarks:
             self.process_bookmark(bookmark)
 
@@ -76,7 +76,7 @@ class RemoveSuffixAction(BaseAction):
 
 
 if __name__ == "__main__":
-    bookmarks = BookmarkExtractor()
+    bookmarks = BookmarkExtractor(FirefoxBookmarkBridge())
     (
             bookmarks
             .add_action(FilterAction("youtube.com"))

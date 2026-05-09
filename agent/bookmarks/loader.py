@@ -1,6 +1,6 @@
 from pathlib import Path
+from typing import Protocol
 from configparser import ConfigParser
-from typing import Self
 import sqlite3
 import msgspec
 from datetime import datetime, timedelta
@@ -17,6 +17,10 @@ class BookmarkData(msgspec.Struct):
     added: str
     timestamp: int
     rev_domain: str
+
+
+class DbBridge(Protocol):
+    def fetch_bookmarks(self) -> list[BookmarkData]: ...
 
 
 def find_firefox_data() -> Path:
@@ -152,6 +156,14 @@ def get_bookmarks_by_name(db_path: Path, name: str) -> list[BookmarkData]:
     bookmarks = fetch_bookmarks_from_db(db_path, query)
     print(f"Extracted {len(bookmarks)} bookmarks.")
     return bookmarks
+
+
+class FirefoxBookmarkBridge():
+    def __init__(self):
+        self.db_path = find_firefox_db()
+
+    def fetch_bookmarks(self) -> list[BookmarkData]:
+        return get_bookmarks(self.db_path)
 
 
 if __name__ == "__main__":
