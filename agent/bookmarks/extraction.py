@@ -53,13 +53,15 @@ class FilterAction:
     def __init__(self, domain: str):
         self.next: ProcessAction | None = None
         self.domain = domain
+        self.rev_domain = domain[::-1] + '.'
 
     def process(self, bookmark: BookmarkData) -> None:
         if self.next:
             self.next.process(bookmark)
 
     def compare(self, bookmark: BookmarkData) -> bool:
-        return bookmark.url.find(self.domain) > 0
+        b_rev = bookmark.rev_domain
+        return b_rev.startswith(self.rev_domain)
 
     def then(self, other: ProcessAction) -> ProcessAction:
         self.next = other
