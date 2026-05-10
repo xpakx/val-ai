@@ -4,6 +4,9 @@ from configparser import ConfigParser
 import sqlite3
 import msgspec
 from datetime import datetime, timedelta
+import os
+import shutil
+import tempfile
 
 from agent.config import get_xdg_data_location
 
@@ -115,7 +118,7 @@ def prepare_query(condition: str) -> str:
     return SQL_QUERY
 
 
-def fetch_bookmarks_from_db(db_path: str, query: str) -> list[BookmarkData]:
+def fetch_bookmarks_from_db(db_path: Path, query: str) -> list[BookmarkData]:
     try:
         print(f"Connecting to database: {db_path}")
         conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
@@ -161,9 +164,28 @@ def get_bookmarks_by_name(db_path: Path, name: str) -> list[BookmarkData]:
 class FirefoxBookmarkBridge():
     def __init__(self):
         self.db_path = find_firefox_db()
+        self.using_copy = False
 
     def fetch_bookmarks(self) -> list[BookmarkData]:
-        return get_bookmarks(self.db_path)
+        try:
+            return get_bookmarks(self.db_path)
+        except Exception as e:
+            if not self.using_copy:
+                self.clone_bookmarks_db()
+                return self.fetch_bookmarks()
+            else:
+                raise e
+
+    def clone_bookmarks_db(self) -> Path:
+        temp_db = os.path.join(tempfile.gettempdir(), "temp_bookmarks.sqlite")
+        temp_db_path = Path(temp_db)
+        try:
+            shutil.copy2(self.db_path, temp_db_path)
+            self.using_copy = True
+            self.db_path = temp_db_path
+        except Exception as e:
+            print(f"Failed to copy database: {e}")
+            return
 
 
 if __name__ == "__main__":
