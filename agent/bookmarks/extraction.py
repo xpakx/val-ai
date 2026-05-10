@@ -75,6 +75,17 @@ class RemoveSuffixAction(BaseAction):
         super().process(b)
 
 
+class RemovePrefixAction(BaseAction):
+    def __init__(self, prefix: str):
+        self.prefix = prefix
+        super().__init__()
+
+    def process(self, bookmark: BookmarkData) -> None:
+        title = bookmark.title.removeprefix(self.prefix).strip()
+        b = msgspec.structs.replace(bookmark, title=title)
+        super().process(b)
+
+
 if __name__ == "__main__":
     bookmarks = BookmarkExtractor(FirefoxBookmarkBridge())
     (
