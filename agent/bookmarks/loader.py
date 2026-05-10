@@ -182,10 +182,15 @@ class FirefoxBookmarkBridge():
         try:
             shutil.copy2(self.db_path, temp_db_path)
             self.using_copy = True
+            print(temp_db_path)
             self.db_path = temp_db_path
         except Exception as e:
             print(f"Failed to copy database: {e}")
             return
+
+    def __del__(self):
+        if self.using_copy and os.path.exists(self.db_path):
+            os.remove(self.db_path)
 
 
 if __name__ == "__main__":
