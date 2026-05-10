@@ -86,6 +86,16 @@ class RemovePrefixAction(BaseAction):
         super().process(b)
 
 
+class ListSinkAction(BaseAction):
+    def __init__(self):
+        self.list = []
+        super().__init__()
+
+    def process(self, bookmark: BookmarkData) -> None:
+        self.list.append(bookmark)
+        super().process(bookmark)
+
+
 if __name__ == "__main__":
     bookmarks = BookmarkExtractor(FirefoxBookmarkBridge())
     (
