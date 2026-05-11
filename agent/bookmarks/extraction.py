@@ -2,6 +2,7 @@ from typing import Protocol, Self
 from agent.bookmarks.loader import FirefoxBookmarkBridge
 from agent.bookmarks.loader import BookmarkData, DbBridge
 import msgspec
+from pathlib import Path
 
 
 class ProcessAction(Protocol):
@@ -95,13 +96,22 @@ class ListSinkAction(BaseAction):
         self.list.append(bookmark)
         super().process(bookmark)
 
+    def save(self, path: Path | str) -> None:
+        if isinstance(path, str):
+            path = Path(path)
+        data = msgspec.json.encode(self.list)
+        path.write_bytes(data)
+
 
 if __name__ == "__main__":
+    sink = ListSinkAction()
     bookmarks = BookmarkExtractor(FirefoxBookmarkBridge())
     (
             bookmarks
             .add_action(FilterAction("youtube.com"))
             .then(RemoveSuffixAction("- Youtube"))
             .then(PrintAction())
+            .then(sink)
     )
     bookmarks.process()
+    sink.save("./test.json")
