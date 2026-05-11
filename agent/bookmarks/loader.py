@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import os
 import shutil
 import tempfile
+from contextlib import closing
 
 from agent.config import get_xdg_data_location
 
@@ -123,31 +124,29 @@ def prepare_query(condition: str) -> str:
 def fetch_bookmarks_from_db(db_path: Path, query: str) -> list[BookmarkData]:
     try:
         print(f"Connecting to database: {db_path}")
-        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
-        cursor = conn.cursor()
+        with closing(sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)) as conn:
+            cursor = conn.cursor()
 
-        bookmarks = []
-        cursor.execute(query)
-        for title, url, date_added_prtime, rev_domain in cursor:
-            if url.startswith("place:"):
-                continue
-            clean_title = title.strip() if title else url
-            bookmarks.append(
-                    BookmarkData(
-                        title=clean_title,
-                        url=url,
-                        added=prtime_to_datetime(date_added_prtime),
-                        timestamp=date_added_prtime,
-                        rev_domain=rev_domain,
-                    )
-            )
-        return bookmarks
+            bookmarks = []
+            cursor.execute(query)
+            for title, url, date_added_prtime, rev_domain in cursor:
+                if url.startswith("place:"):
+                    continue
+                clean_title = title.strip() if title else url
+                bookmarks.append(
+                        BookmarkData(
+                            title=clean_title,
+                            url=url,
+                            added=prtime_to_datetime(date_added_prtime),
+                            timestamp=date_added_prtime,
+                            rev_domain=rev_domain,
+                        )
+                )
+            return bookmarks
     except sqlite3.OperationalError as e:
         if "database is locked" in str(e):
             raise Exception("WARNING: The database is locked. Ensure Firefox is closed or try again.")
-    finally:
-        conn.close()
-    return []
+        raise e
 
 
 def get_bookmarks(db_path: Path) -> list[BookmarkData]:
