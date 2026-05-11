@@ -48,7 +48,7 @@ def load_ini_file(root_path: Path) -> ConfigParser:
     return config
 
 
-def find_default_profile(config: ConfigParser, root_path: Path) -> str | None:
+def find_default_profile(config: ConfigParser, root_path: Path) -> Path | None:
     default_profile_path = None
     for section in config.sections():
         if section.startswith("Profile"):
@@ -70,6 +70,8 @@ def find_firefox_db() -> Path:
     root_path = find_firefox_data()
     config = load_ini_file(root_path)
     profile = find_default_profile(config, root_path)
+    if not profile:
+        raise FileNotFoundError("Couldn't find firefox profile")
     db_path = profile / "places.sqlite"
     if not db_path.exists():
         raise FileNotFoundError(
@@ -145,6 +147,7 @@ def fetch_bookmarks_from_db(db_path: Path, query: str) -> list[BookmarkData]:
             raise Exception("WARNING: The database is locked. Ensure Firefox is closed or try again.")
     finally:
         conn.close()
+    return []
 
 
 def get_bookmarks(db_path: Path) -> list[BookmarkData]:
@@ -176,7 +179,7 @@ class FirefoxBookmarkBridge():
             else:
                 raise e
 
-    def clone_bookmarks_db(self) -> Path:
+    def clone_bookmarks_db(self) -> None:
         temp_db = os.path.join(tempfile.gettempdir(), "temp_bookmarks.sqlite")
         temp_db_path = Path(temp_db)
         try:
@@ -186,7 +189,7 @@ class FirefoxBookmarkBridge():
             self.db_path = temp_db_path
         except Exception as e:
             print(f"Failed to copy database: {e}")
-            return
+            raise e
 
     def __del__(self):
         if self.using_copy and os.path.exists(self.db_path):

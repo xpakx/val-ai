@@ -1,4 +1,4 @@
-from typing import Protocol, Self
+from typing import Protocol
 from agent.bookmarks.loader import FirefoxBookmarkBridge
 from agent.bookmarks.loader import BookmarkData, DbBridge
 import msgspec
@@ -7,7 +7,7 @@ from pathlib import Path
 
 class ProcessAction(Protocol):
     def process(self, bookmark: BookmarkData) -> None: ...
-    def then(self, other: Self) -> Self: ...
+    def then(self, other: "ProcessAction") -> "ProcessAction": ...
 
 
 class BookmarkExtractor:

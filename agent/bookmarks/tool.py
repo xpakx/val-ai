@@ -12,4 +12,5 @@ def bookmark_tool(name: str | None = None) -> str:
         bookmarks = get_bookmarks_by_name(db, name)
     else:
         bookmarks = get_bookmarks(db)
-    return msgspec.json.encode(bookmarks)
+    data = msgspec.json.encode(bookmarks)
+    return data.decode('utf-8')
