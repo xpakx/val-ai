@@ -2,6 +2,7 @@ from typing import Protocol
 from agent.bookmarks.loader import FirefoxBookmarkBridge
 from agent.bookmarks.loader import BookmarkData, DbBridge
 import msgspec
+import re
 from pathlib import Path
 
 
@@ -58,8 +59,7 @@ class FilterAction(BaseAction):
         super().__init__()
 
     def _remove_protocol(self):
-        self.domain = self.domain.removesuffix('http://')
-        self.domain = self.domain.removesuffix('https://')
+        self.domain = re.sub(r'^(?i)https?://', '', self.domain)
 
     def process(self, bookmark) -> None:
         if self.next and self.compare(bookmark):
