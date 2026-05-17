@@ -53,8 +53,13 @@ class PrintAction(BaseAction):
 class FilterAction(BaseAction):
     def __init__(self, domain: str):
         self.domain = domain
+        self._remove_protocol()
         self.rev_domain = domain[::-1] + '.'
         super().__init__()
+
+    def _remove_protocol(self):
+        self.domain = self.domain.removesuffix('http://')
+        self.domain = self.domain.removesuffix('https://')
 
     def process(self, bookmark) -> None:
         if self.next and self.compare(bookmark):
