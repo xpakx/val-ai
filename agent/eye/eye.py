@@ -1,5 +1,6 @@
 import asyncio
 from typing import Callable, Dict, List
+from agent.eye.files import WatchdogFeature
 
 
 class Eye:
@@ -52,7 +53,13 @@ async def fake_sevice():
 async def handle_data(data):
     print(f"Event: Processed data {data}")
 
+
+@app.on("file_changed")
+async def on_file_change(path):
+    print(f"Feature detected change: {path}")
+
 app.add_service(fake_sevice)
+app.add_service(WatchdogFeature())
 
 if __name__ == "__main__":
     try:
