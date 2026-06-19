@@ -26,7 +26,15 @@ class Eye:
             await asyncio.gather(*tasks)
 
     async def run(self):
-        tasks = [asyncio.create_task(service()) for service in self._services]
+        tasks = []
+        for service in self._services:
+            if hasattr(service, 'init'):
+                service.init(self)
+            if hasattr(service, 'run'):
+                tasks.append(
+                        asyncio.create_task(service.run(self)))
+            else:
+                tasks.append(asyncio.create_task(service()))
         print("App running. Press Ctrl+C to stop.")
         await asyncio.gather(*tasks)
 
