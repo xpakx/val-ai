@@ -1,0 +1,53 @@
+import asyncio
+from typing import Callable, Dict, List
+
+
+class Eye:
+    def __init__(self):
+        self._events: Dict[str, List[Callable]] = {}
+        self._services: List[Callable] = []
+
+    # TODO: smart registration of services
+    # TODO: smart params
+    def on(self, event_name: str):
+        def decorator(func: Callable):
+            if event_name not in self._events:
+                self._events[event_name] = []
+            self._events[event_name].append(func)
+            return func
+        return decorator
+
+    def add_service(self, service_func: Callable):
+        self._services.append(service_func)
+
+    async def emit(self, event_name: str, *args, **kwargs):
+        if event_name in self._events:
+            tasks = [handler(*args, **kwargs) for handler in self._events[event_name]]
+            await asyncio.gather(*tasks)
+
+    async def run(self):
+        tasks = [asyncio.create_task(service()) for service in self._services]
+        print("App running. Press Ctrl+C to stop.")
+        await asyncio.gather(*tasks)
+
+
+app = Eye()
+
+
+async def fake_sevice():
+    while True:
+        await app.emit("data_received", {"id": 1, "value": 100})
+        await asyncio.sleep(5)
+
+
+@app.on("data_received")
+async def handle_data(data):
+    print(f"Event: Processed data {data}")
+
+app.add_service(fake_sevice)
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(app.run())
+    except KeyboardInterrupt:
+        pass
