@@ -4,17 +4,30 @@ from watchdog.events import FileSystemEventHandler
 
 
 class AsyncWatchdogHandler(FileSystemEventHandler):
-    def __init__(self, app, loop):
+    def __init__(self, app, loop, debounce: float = 0.3):
         self.app = app
         self.loop = loop
+        self.debounce = debounce
+        self._timers = {}
 
     def on_modified(self, event):
-        if not event.is_directory:
-            print("EVENT", event.src_path)
-            print(event)
-            self.loop.call_soon_threadsafe(
-                lambda: asyncio.create_task(self.app.emit("file_changed", event.src_path))
-            )
+        if event.is_directory:
+            return
+        # neovim temporary file
+        if event.src_path.endswith('4913'):
+            return
+        if event.src_path in self._timers:
+            self._timers[event.src_path].cancel()
+        # print("EVENT", event.src_path)
+        # print(event)
+        self._timers[event.src_path] = self.loop.call_later(
+            self.debounce,
+            lambda: self._dispatch(event.src_path)
+        )
+
+    def _dispatch(self, path: str):
+        self._timers.pop(path, None)
+        asyncio.create_task(self.app.emit("file_changed", path))
 
 
 class WatchdogFeature:
