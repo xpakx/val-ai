@@ -35,7 +35,7 @@ class Eye:
                 tasks.append(
                         asyncio.create_task(service.run(self)))
             else:
-                tasks.append(asyncio.create_task(service()))
+                tasks.append(asyncio.create_task(service(self)))
         print("App running. Press Ctrl+C to stop.")
         await asyncio.gather(*tasks)
 
@@ -43,7 +43,7 @@ class Eye:
 app = Eye()
 
 
-async def fake_sevice():
+async def fake_sevice(app):
     while True:
         await app.emit("data_received", {"id": 1, "value": 100})
         await asyncio.sleep(5)
