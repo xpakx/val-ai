@@ -24,7 +24,11 @@ class Eye:
     async def emit(self, event_name: str, *args, **kwargs):
         if event_name in self._events:
             tasks = [handler(*args, **kwargs) for handler in self._events[event_name]]
-            await asyncio.gather(*tasks)
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            for res in results:
+                if isinstance(res, Exception):
+                    print(f"Error in handler for {event_name}: {res}")
+
 
     async def run(self):
         tasks = []
