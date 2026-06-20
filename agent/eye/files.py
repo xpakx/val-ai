@@ -54,7 +54,15 @@ class WatchdogFeature:
         def on_modified(event):
             self.on_modified(event)
 
+        def on_created(event):
+            self.on_created(event)
+
+        def on_deleted(event):
+            self.on_deleted(event)
+
         self.handler.on_modified = on_modified
+        self.handler.on_created = on_created
+        self.handler.on_deleted = on_deleted
         self.observer = Observer()
         self.observer.schedule(self.handler, self.path, recursive=True)
 
@@ -71,12 +79,20 @@ class WatchdogFeature:
             self._timers[event.src_path].cancel()
         self._timers[event.src_path] = self.loop.call_later(
             self.debounce,
-            lambda: self._dispatch(event.src_path)
+            lambda: self._dispatch("file_changed", event.src_path)
         )
 
-    def _dispatch(self, path: str):
+    def on_created(self, event):
+        self.loop.call_soon_threadsafe(
+                self._dispatch, "file_created", event.src_path)
+
+    def on_deleted(self, event):
+        self.loop.call_soon_threadsafe(
+                self._dispatch, "file_deleted", event.src_path)
+
+    def _dispatch(self, event_name: str, path: str):
         self._timers.pop(path, None)
-        asyncio.create_task(self.app.emit("file_changed", path))
+        asyncio.create_task(self.app.emit(event_name, path))
 
     def _prepare_ignore_patterns(self) -> PathSpec:
         # neovim temporary file
