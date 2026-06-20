@@ -1,7 +1,7 @@
 import asyncio
 from watchdog.observers import Observer
-from watchdog.events import PatternMatchingEventHandler
-import pathspec
+from watchdog.events import FileSystemEventHandler
+from pathspec import PathSpec
 from pathlib import Path
 
 # TODO: patterns and file ignoring
@@ -9,6 +9,27 @@ from pathlib import Path
 # TODO: patterns and ignore_patterns should be constructed based
 #       on defined events
 # TODO: on_deleted/on_moved/on_created
+
+
+class GitIgnoreHandler(FileSystemEventHandler):
+    def __init__(self, root_path, spec: PathSpec,
+                 ignore_directories: bool):
+        self.root_path = Path(root_path).resolve()
+        self.spec = spec
+        self.ignore_directories = ignore_directories
+
+    def dispatch(self, event):
+        if self.ignore_directories and event.is_directory:
+            return
+        abs_path = Path(event.src_path).resolve()
+
+        try:
+            rel_path = abs_path.relative_to(self.root_path)
+            if self.spec.match_file(str(rel_path)):
+                return
+            super().dispatch(event)
+        except ValueError:
+            pass
 
 
 class WatchdogFeature:
@@ -21,13 +42,12 @@ class WatchdogFeature:
         self.loop = asyncio.get_running_loop()
         self.app = app
 
-        ignore_patterns = self._prepare_ignore_patterns()
+        spec = self._prepare_ignore_patterns()
 
-        self.handler = PatternMatchingEventHandler(
-            # patterns=["*.py"],
-            ignore_patterns=ignore_patterns,
-            ignore_directories=True,
-            case_sensitive=False
+        self.handler = GitIgnoreHandler(
+                spec=spec,
+                ignore_directories=True,
+                root_path=self.path
         )
 
         def on_modified(event):
@@ -57,24 +77,17 @@ class WatchdogFeature:
         self._timers.pop(path, None)
         asyncio.create_task(self.app.emit("file_changed", path))
 
-    def _prepare_ignore_patterns(self) -> list[str]:
+    def _prepare_ignore_patterns(self) -> PathSpec:
         # neovim temporary file
         result = ["4913"]
-
         gitignore = self._use_gitignore(Path("./.gitignore"))
         if gitignore:
             result.extend(gitignore)
         print(result)
-        return result
+        spec = PathSpec.from_lines('gitwildmatch', result)
+        return spec
 
     def _use_gitignore(self, path):
         if not path.exists():
-            return
-        result = []
-        data = path.read_text().splitlines()
-        to_ignore = pathspec.PathSpec.from_lines('gitwildmatch', data)
-        for pattern in to_ignore.patterns:
-            if pattern.include:
-                result.append(pattern.pattern)
-        print(result)
-        return result
+            return None
+        return path.read_text().splitlines()

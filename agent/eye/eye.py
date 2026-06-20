@@ -29,7 +29,6 @@ class Eye:
                 if isinstance(res, Exception):
                     print(f"Error in handler for {event_name}: {res}")
 
-
     async def run(self):
         tasks = []
         for service in self._services:
