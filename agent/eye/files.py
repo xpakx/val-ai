@@ -5,7 +5,6 @@ from pathspec import PathSpec
 from pathlib import Path
 
 # TODO: patterns and file ignoring
-# TODO: use .gitignore with pathspec by default
 # TODO: patterns and ignore_patterns should be constructed based
 #       on defined events
 # TODO: on_deleted/on_moved/on_created
@@ -33,10 +32,12 @@ class GitIgnoreHandler(FileSystemEventHandler):
 
 
 class WatchdogFeature:
-    def __init__(self, path: str = '.', debounce: float = 0.3):
+    def __init__(self, path: str = '.', debounce: float = 0.3,
+                 ignore_hidden: bool = True):
         self.path = path
         self._timers = {}
         self.debounce = debounce
+        self.ignore_hidden = ignore_hidden
 
     async def run(self, app):
         self.loop = asyncio.get_running_loop()
@@ -80,6 +81,8 @@ class WatchdogFeature:
     def _prepare_ignore_patterns(self) -> PathSpec:
         # neovim temporary file
         result = ["4913"]
+        if self.ignore_hidden:
+            result.append(".*")
         gitignore = self._use_gitignore(Path("./.gitignore"))
         if gitignore:
             result.extend(gitignore)

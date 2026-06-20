@@ -61,7 +61,7 @@ async def handle_data(data):
 async def on_file_change(path):
     print(f"Feature detected change: {path}")
 
-app.add_service(fake_sevice)
+# app.add_service(fake_sevice)
 app.add_service(WatchdogFeature())
 
 if __name__ == "__main__":
