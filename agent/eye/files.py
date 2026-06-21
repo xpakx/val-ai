@@ -103,7 +103,7 @@ class WatchdogFeature:
         result = ["4913"]
         if self.ignore_hidden:
             result.append(".*")
-        gitignore = self._use_gitignore(Path("./.gitignore"))
+        gitignore = self._use_gitignore(Path(self.path) / ".gitignore")
         if gitignore:
             result.extend(gitignore)
         print(result)
