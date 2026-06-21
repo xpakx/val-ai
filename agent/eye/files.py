@@ -55,22 +55,10 @@ class WatchdogFeature:
                 root_path=self.path
         )
 
-        def on_modified(event):
-            self.on_modified(event)
-
-        def on_created(event):
-            self.on_created(event)
-
-        def on_deleted(event):
-            self.on_deleted(event)
-
-        def on_moved(event):
-            self.on_moved(event)
-
-        self.handler.on_modified = on_modified
-        self.handler.on_created = on_created
-        self.handler.on_deleted = on_deleted
-        self.handler.on_moved = on_moved
+        self.handler.on_modified = self.on_modified
+        self.handler.on_created = self.on_created
+        self.handler.on_deleted = self.on_deleted
+        self.handler.on_moved = self.on_moved
         self.observer = Observer()
         self.observer.schedule(self.handler, self.path, recursive=True)
 
