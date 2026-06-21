@@ -21,6 +21,9 @@ class GitIgnoreHandler(FileSystemEventHandler):
             return
         if self.is_ignored(event.src_path):
             return
+        if event.event_type == 'moved' and self.is_ignored(event.dest_path):
+            return
+
         super().dispatch(event)
 
     def is_ignored(self, path_str: str):
@@ -61,9 +64,13 @@ class WatchdogFeature:
         def on_deleted(event):
             self.on_deleted(event)
 
+        def on_moved(event):
+            self.on_moved(event)
+
         self.handler.on_modified = on_modified
         self.handler.on_created = on_created
         self.handler.on_deleted = on_deleted
+        self.handler.on_moved = on_moved
         self.observer = Observer()
         self.observer.schedule(self.handler, self.path, recursive=True)
 
@@ -90,6 +97,10 @@ class WatchdogFeature:
     def on_deleted(self, event):
         self.loop.call_soon_threadsafe(
                 self._dispatch, "file_deleted", event.src_path)
+
+    def on_moved(self, event):
+        self.loop.call_soon_threadsafe(
+                self._dispatch, "file_moved", event.src_path)
 
     def _dispatch(self, event_name: str, path: str):
         self._timers.pop(path, None)
