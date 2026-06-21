@@ -125,4 +125,5 @@ class WatchdogFeature:
     def _use_gitignore(self, path):
         if not path.exists():
             return None
-        return path.read_text().splitlines()
+        data = path.read_text().splitlines()
+        return [line for line in data if line and not line.startswith('#')]
