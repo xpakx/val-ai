@@ -7,7 +7,6 @@ from pathlib import Path
 # TODO: patterns and file ignoring
 # TODO: patterns and ignore_patterns should be constructed based
 #       on defined events
-# TODO: on_deleted/on_moved/on_created
 
 
 class GitIgnoreHandler(FileSystemEventHandler):
@@ -20,15 +19,17 @@ class GitIgnoreHandler(FileSystemEventHandler):
     def dispatch(self, event):
         if self.ignore_directories and event.is_directory:
             return
-        abs_path = Path(event.src_path).resolve()
+        if self.is_ignored(event.src_path):
+            return
+        super().dispatch(event)
 
+    def is_ignored(self, path_str: str):
         try:
+            abs_path = Path(path_str).resolve()
             rel_path = abs_path.relative_to(self.root_path)
-            if self.spec.match_file(str(rel_path)):
-                return
-            super().dispatch(event)
+            return self.spec.match_file(rel_path.as_posix())
         except ValueError:
-            pass
+            return True
 
 
 class WatchdogFeature:
