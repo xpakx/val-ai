@@ -108,7 +108,7 @@ class WatchdogFeature:
 
     def _dispatch(self, event_name: str, path: str):
         self._timers.pop(path, None)
-        asyncio.create_task(self.app.emit(event_name, path))
+        self.loop.create_task(self.app.emit(event_name, path))
 
     def _prepare_ignore_patterns(self) -> PathSpec:
         # neovim temporary file
