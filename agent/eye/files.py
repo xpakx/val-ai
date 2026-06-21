@@ -46,6 +46,7 @@ class WatchdogFeature:
     async def run(self, app):
         self.loop = asyncio.get_running_loop()
         self.app = app
+        self._stop_event = asyncio.Event()
 
         spec = self._prepare_ignore_patterns()
 
@@ -64,8 +65,7 @@ class WatchdogFeature:
 
         self.observer.start()
         try:
-            while True:
-                await asyncio.sleep(1)
+            await self._stop_event.wait()
         finally:
             self.observer.stop()
             self.observer.join()
