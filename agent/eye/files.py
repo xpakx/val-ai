@@ -83,11 +83,15 @@ class WatchdogFeature:
             self.observer.join()
 
     def on_modified(self, event):
-        if event.src_path in self._timers:
-            self._timers[event.src_path].cancel()
-        self._timers[event.src_path] = self.loop.call_later(
+        self.loop.call_soon_threadsafe(
+                self._handle_modified, event.src_path)
+
+    def _handle_modified(self, path: str):
+        if path in self._timers:
+            self._timers[path].cancel()
+        self._timers[path] = self.loop.call_later(
             self.debounce,
-            lambda: self._dispatch("file_changed", event.src_path)
+            lambda: self._dispatch("file_changed", path)
         )
 
     def on_created(self, event):
