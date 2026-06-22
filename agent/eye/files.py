@@ -42,6 +42,7 @@ class WatchdogFeature:
         self._timers = {}
         self.debounce = debounce
         self.ignore_hidden = ignore_hidden
+        self.active_watches = {}
 
     async def run(self, app):
         self.loop = asyncio.get_running_loop()
@@ -62,6 +63,7 @@ class WatchdogFeature:
         self.handler.on_moved = self.on_moved
         self.observer = Observer()
         self.observer.schedule(self.handler, self.path, recursive=True)
+        self.add_route("../test", 'test')
 
         self.observer.start()
         try:
@@ -118,3 +120,27 @@ class WatchdogFeature:
 
     def stop(self):
         self._stop_event.set()
+
+    def on_dynamic(self, key, event):
+        self.loop.call_soon_threadsafe(
+                self._dispatch, key, event.src_path)
+
+    def add_route(self, path: str | Path, event_name: str):
+        resolved_path = Path(path).resolve()
+
+        class RoutedHandler(FileSystemEventHandler):
+            def __init__(self, router, name):
+                self.router = router
+                self.name = name
+                print(router, name)
+
+            def dispatch(self, event):
+                self.router.on_dynamic(self.name, event)
+
+        watch = self.observer.schedule(
+            RoutedHandler(self, event_name),
+            path=str(resolved_path),
+            recursive=True
+        )
+
+        self.active_watches[resolved_path] = watch

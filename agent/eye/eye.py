@@ -71,6 +71,11 @@ async def on_file_creation(path):
 async def on_file_deletion(path):
     print(f"Feature detected deletion: {path}")
 
+
+@app.on("test")
+async def on_test_file(path):
+    print(f"Feature detected test file change: {path}")
+
 # app.add_service(fake_sevice)
 app.add_service(WatchdogFeature())
 
