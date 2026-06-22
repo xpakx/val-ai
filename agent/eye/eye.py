@@ -72,12 +72,14 @@ async def on_file_deletion(path):
     print(f"Feature detected deletion: {path}")
 
 
-@app.on("test")
-async def on_test_file(path):
-    print(f"Feature detected test file change: {path}")
+@app.on("git_change")
+async def on_git(path):
+    print(f"Feature detected git change: {path}")
 
 # app.add_service(fake_sevice)
-app.add_service(WatchdogFeature())
+wd = WatchdogFeature()
+app.add_service(wd)
+wd.add_route("./.git", 'git_change')
 
 if __name__ == "__main__":
     try:

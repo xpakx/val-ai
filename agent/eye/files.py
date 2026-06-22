@@ -43,6 +43,8 @@ class WatchdogFeature:
         self.debounce = debounce
         self.ignore_hidden = ignore_hidden
         self.active_watches = {}
+        self.watches_to_add = {}
+        self.observer = None
 
     async def run(self, app):
         self.loop = asyncio.get_running_loop()
@@ -63,7 +65,7 @@ class WatchdogFeature:
         self.handler.on_moved = self.on_moved
         self.observer = Observer()
         self.observer.schedule(self.handler, self.path, recursive=True)
-        self.add_route("../test", 'test')
+        self._do_add_routes()
 
         self.observer.start()
         try:
@@ -125,22 +127,31 @@ class WatchdogFeature:
         self.loop.call_soon_threadsafe(
                 self._dispatch, key, event.src_path)
 
-    def add_route(self, path: str | Path, event_name: str):
-        resolved_path = Path(path).resolve()
-
+    def _do_add_route(self, path: Path, event_name: str):
         class RoutedHandler(FileSystemEventHandler):
             def __init__(self, router, name):
                 self.router = router
                 self.name = name
-                print(router, name)
 
             def dispatch(self, event):
                 self.router.on_dynamic(self.name, event)
 
         watch = self.observer.schedule(
             RoutedHandler(self, event_name),
-            path=str(resolved_path),
+            path=str(path),
             recursive=True
         )
 
-        self.active_watches[resolved_path] = watch
+        self.active_watches[path] = watch
+
+    def add_route(self, path: str | Path, event_name: str):
+        resolved_path = Path(path).resolve()
+        if not self.observer:
+            self.watches_to_add[resolved_path] = event_name
+        else:
+            self._do_add_route(resolved_path, event_name)
+
+    def _do_add_routes(self):
+        for path, event in self.watches_to_add.items():
+            self._do_add_route(path, event)
+        self.watches_to_add = []
