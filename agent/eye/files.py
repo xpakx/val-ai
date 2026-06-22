@@ -115,3 +115,6 @@ class WatchdogFeature:
             return None
         data = path.read_text().splitlines()
         return [line for line in data if line and not line.startswith('#')]
+
+    def stop(self):
+        self._stop_event.set()

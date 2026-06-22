@@ -4,9 +4,6 @@ from configparser import ConfigParser
 import sqlite3
 import msgspec
 from datetime import datetime, timedelta
-import os
-import shutil
-import tempfile
 from contextlib import closing
 
 from agent.config import get_xdg_data_location
