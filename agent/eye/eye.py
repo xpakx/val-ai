@@ -80,6 +80,7 @@ async def on_git(path):
 wd = WatchdogFeature()
 app.add_service(wd)
 wd.add_route("./.git", 'git_change')
+wd.remove_route("./.git")
 
 if __name__ == "__main__":
     try:

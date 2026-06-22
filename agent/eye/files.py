@@ -155,3 +155,11 @@ class WatchdogFeature:
         for path, event in self.watches_to_add.items():
             self._do_add_route(path, event)
         self.watches_to_add = []
+
+    def remove_route(self, path: str | Path):
+        resolved_path = Path(path).resolve()
+        if resolved_path in self.active_watches:
+            self.observer.unschedule(self.active_watches[resolved_path])
+            del self.active_watches[resolved_path]
+        if resolved_path in self.watches_to_add:
+            del self.watches_to_add[resolved_path]
