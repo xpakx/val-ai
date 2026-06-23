@@ -154,7 +154,7 @@ class WatchdogFeature:
     def _do_add_routes(self):
         for path, event in self.watches_to_add.items():
             self._do_add_route(path, event)
-        self.watches_to_add = []
+        self.watches_to_add = {}
 
     def remove_route(self, path: str | Path):
         resolved_path = Path(path).resolve()
