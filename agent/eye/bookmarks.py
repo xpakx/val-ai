@@ -18,21 +18,18 @@ class BookmarksFileFeature:
         self.last_bookmark_timestamp = 0
 
     def init(self, app):
-        # TODO: add better registry api to app
-        services = app._services
-        result = next((s for s in services if s.name == 'watchdog'), None)
-        if not result:
+        watchdog_feature = app.get_service("watchdog")
+        if not watchdog_feature:
             raise Exception('Boomark feature depends on watchdog feature!')
         self.db_path = find_firefox_db()
         event_name = '_internal_bookmark_db_modified'
-        result.add_route(self.db_path, event_name)
+        watchdog_feature.add_route(self.db_path, event_name)
         print(self.db_path)
 
         async def on_db_modified(event):
             await self.on_db_modified(event)
 
-        app._events[event_name] = []
-        app._events[event_name].append(on_db_modified)
+        app.add_event(event_name, on_db_modified)
 
     async def on_db_modified(self, event):
         new_bookmarks = await asyncio.to_thread(self._fetch_new_bookmarks_sync)

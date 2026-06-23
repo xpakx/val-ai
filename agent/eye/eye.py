@@ -13,14 +13,21 @@ class Eye:
     # TODO: smart params
     def on(self, event_name: str):
         def decorator(func: Callable):
-            if event_name not in self._events:
-                self._events[event_name] = []
-            self._events[event_name].append(func)
+            self.add_event(event_name, func)
             return func
         return decorator
 
+    def add_event(self, event_name: str, func: Callable):
+        if event_name not in self._events:
+            self._events[event_name] = []
+        self._events[event_name].append(func)
+
     def add_service(self, service_func: Callable):
         self._services.append(service_func)
+
+    def get_service(self, name: str):
+        # TODO: proper dict index
+        return next((s for s in self._services if s.name == name), None)
 
     async def emit(self, event_name: str, *args, **kwargs):
         if event_name in self._events:
