@@ -18,6 +18,7 @@ class BookmarksFileFeature:
         self.last_bookmark_timestamp = 0
 
     def init(self, app):
+        self.app = app
         watchdog_feature = app.get_service("watchdog")
         if not watchdog_feature:
             raise Exception('Boomark feature depends on watchdog feature!')
@@ -37,9 +38,8 @@ class BookmarksFileFeature:
         if not new_bookmarks:
             return
         self.last_bookmark_timestamp = new_bookmarks[-1]["date_added"]
-        print(f"Found {len(new_bookmarks)} new bookmark(s):")
         for bm in new_bookmarks:
-            print(f" - {bm['title'] or 'No Title'}: {bm['url']}")
+            await self.app.emit('bookmark_added', bm)
 
     async def run(self, app):
         pass

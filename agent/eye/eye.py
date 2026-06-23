@@ -84,6 +84,11 @@ async def on_file_deletion(path):
 async def on_git(path):
     print(f"Feature detected git change: {path}")
 
+
+@app.on("bookmark_added")
+async def on_bookmark(bm):
+    print(f" - {bm['title'] or 'No Title'}: {bm['url']}")
+
 # app.add_service(fake_sevice)
 app.add_service(WatchdogFeature())
 app.add_service(BookmarksFileFeature())
