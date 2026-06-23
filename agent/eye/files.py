@@ -10,11 +10,13 @@ from pathlib import Path
 
 
 class GitIgnoreHandler(FileSystemEventHandler):
-    def __init__(self, root_path, spec: PathSpec,
+    def __init__(self, router: "WatchdogFeature",
+                 root_path, spec: PathSpec,
                  ignore_directories: bool):
         self.root_path = Path(root_path).resolve()
         self.spec = spec
         self.ignore_directories = ignore_directories
+        self.router = router
 
     def dispatch(self, event):
         if self.ignore_directories and event.is_directory:
@@ -33,6 +35,18 @@ class GitIgnoreHandler(FileSystemEventHandler):
             return self.spec.match_file(rel_path.as_posix())
         except ValueError:
             return True
+
+    def on_modified(self, event):
+        self.router.on_modified(event)
+
+    def on_created(self, event):
+        self.router.on_created(event)
+
+    def on_deleted(self, event):
+        self.router.on_deleted(event)
+
+    def on_moved(self, event):
+        self.router.on_moved(event)
 
 
 class WatchdogFeature:
@@ -54,15 +68,12 @@ class WatchdogFeature:
         spec = self._prepare_ignore_patterns()
 
         self.handler = GitIgnoreHandler(
+                router=self,
                 spec=spec,
                 ignore_directories=True,
                 root_path=self.path
         )
 
-        self.handler.on_modified = self.on_modified
-        self.handler.on_created = self.on_created
-        self.handler.on_deleted = self.on_deleted
-        self.handler.on_moved = self.on_moved
         self.observer = Observer()
         self.observer.schedule(self.handler, self.path, recursive=True)
         self._do_add_routes()
