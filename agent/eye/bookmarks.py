@@ -64,7 +64,6 @@ class BookmarksFileFeature:
                 cursor.execute(query, (self.last_bookmark_timestamp,))
 
                 for row in cursor.fetchall():
-                    print(row)
                     new_bookmarks.append({
                         "id": row["id"],
                         "title": row["title"],

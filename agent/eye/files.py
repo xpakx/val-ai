@@ -54,6 +54,7 @@ class WatchdogFeature:
                  ignore_hidden: bool = True):
         self.path = path
         self._timers = {}
+        self._timers_external = {}
         self.debounce = debounce
         self.ignore_hidden = ignore_hidden
         self.active_watches = {}
@@ -140,7 +141,19 @@ class WatchdogFeature:
 
     def on_dynamic(self, key, event):
         self.loop.call_soon_threadsafe(
-                self._dispatch, key, event.src_path)
+                self._handle_dynamic, key, event.src_path)
+
+    def _handle_dynamic(self, key, path):
+        if path in self._timers_external:
+            self._timers_external[path].cancel()
+        self._timers_external[path] = self.loop.call_later(
+            self.debounce,
+            lambda: self._dispatch_debounced_ext(key, path)
+        )
+
+    def _dispatch_debounced_ext(self, event_name: str, path: str):
+        self._timers_external.pop(path, None)
+        self._dispatch(event_name, path)
 
     def _do_add_route(self, path: Path, event_name: str):
         class RoutedHandler(FileSystemEventHandler):
