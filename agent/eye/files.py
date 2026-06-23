@@ -94,7 +94,7 @@ class WatchdogFeature:
             self._timers[path].cancel()
         self._timers[path] = self.loop.call_later(
             self.debounce,
-            lambda: self._dispatch("file_changed", path)
+            lambda: self._dispatch_debounced("file_changed", path)
         )
 
     def on_created(self, event):
@@ -110,8 +110,11 @@ class WatchdogFeature:
                 self._dispatch, "file_moved", event.src_path)
 
     def _dispatch(self, event_name: str, path: str):
-        self._timers.pop(path, None)
         self.loop.create_task(self.app.emit(event_name, path))
+
+    def _dispatch_debounced(self, event_name: str, path: str):
+        self._timers.pop(path, None)
+        self._dispatch(event_name, path)
 
     def _prepare_ignore_patterns(self) -> PathSpec:
         # neovim temporary file
