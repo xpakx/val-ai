@@ -59,6 +59,7 @@ class WatchdogFeature:
         self.active_watches = {}
         self.watches_to_add = {}
         self.observer = None
+        self.name = 'watchdog'
 
     async def run(self, app):
         self.loop = asyncio.get_running_loop()

@@ -1,6 +1,7 @@
 import asyncio
 from typing import Callable, Dict, List
 from agent.eye.files import WatchdogFeature
+from agent.eye.bookmarks import BookmarksFileFeature
 
 
 class Eye:
@@ -77,10 +78,8 @@ async def on_git(path):
     print(f"Feature detected git change: {path}")
 
 # app.add_service(fake_sevice)
-wd = WatchdogFeature()
-app.add_service(wd)
-wd.add_route("./.git", 'git_change')
-wd.remove_route("./.git")
+app.add_service(WatchdogFeature())
+app.add_service(BookmarksFileFeature())
 
 if __name__ == "__main__":
     try:
