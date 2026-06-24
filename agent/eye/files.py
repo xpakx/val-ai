@@ -49,43 +49,16 @@ class GitIgnoreHandler(FileSystemEventHandler):
         self.router.on_moved(event)
 
 
-class WatchdogFeature:
-    def __init__(self, path: str = '.', debounce: float = 0.3,
-                 ignore_hidden: bool = True):
-        self.path = path
+class WatchdogEventRouter:
+    def __init__(self, loop, app, debounce: float = 0.3):
         self._timers = {}
-        self._timers_external = {}
         self.debounce = debounce
-        self.ignore_hidden = ignore_hidden
-        self.active_watches = {}
-        self.watches_to_add = {}
-        self.observer = None
-        self.name = 'watchdog'
-
-    async def run(self, app):
-        self.loop = asyncio.get_running_loop()
+        self.loop = loop
         self.app = app
-        self._stop_event = asyncio.Event()
+        self.handler = None
 
-        spec = self._prepare_ignore_patterns()
-
-        self.handler = GitIgnoreHandler(
-                router=self,
-                spec=spec,
-                ignore_directories=True,
-                root_path=self.path
-        )
-
-        self.observer = Observer()
-        self.observer.schedule(self.handler, self.path, recursive=True)
-        self._do_add_routes()
-
-        self.observer.start()
-        try:
-            await self._stop_event.wait()
-        finally:
-            self.observer.stop()
-            self.observer.join()
+    def set_handler(self, handler):
+        self.handler = handler
 
     def on_modified(self, event):
         self.loop.call_soon_threadsafe(
@@ -118,6 +91,51 @@ class WatchdogFeature:
         self._timers.pop(path, None)
         self._dispatch(event_name, path)
 
+
+class WatchdogFeature:
+    def __init__(self, path: str = '.', debounce: float = 0.3,
+                 ignore_hidden: bool = True):
+        self.path = path
+        self._timers = {}
+        self._timers_external = {}
+        self.debounce = debounce
+        self.ignore_hidden = ignore_hidden
+        self.active_watches = {}
+        self.watches_to_add = {}
+        self.observer = None
+        self.name = 'watchdog'
+
+    async def run(self, app):
+        self.loop = asyncio.get_running_loop()
+        self.app = app
+        self._stop_event = asyncio.Event()
+
+        spec = self._prepare_ignore_patterns()
+
+        self.main_event_router = WatchdogEventRouter(
+                self.loop,
+                self.app,
+                self.debounce
+        )
+        handler = GitIgnoreHandler(
+                router=self.main_event_router,
+                spec=spec,
+                ignore_directories=True,
+                root_path=self.path
+        )
+        self.main_event_router.set_handler(handler)
+
+        self.observer = Observer()
+        self.observer.schedule(handler, self.path, recursive=True)
+        self._do_add_routes()
+
+        self.observer.start()
+        try:
+            await self._stop_event.wait()
+        finally:
+            self.observer.stop()
+            self.observer.join()
+
     def _prepare_ignore_patterns(self) -> PathSpec:
         # neovim temporary file
         result = ["4913"]
@@ -138,6 +156,13 @@ class WatchdogFeature:
 
     def stop(self):
         self._stop_event.set()
+
+    def _dispatch(self, event_name: str, path: str):
+        self.loop.create_task(self.app.emit(event_name, path))
+
+    def _dispatch_debounced(self, event_name: str, path: str):
+        self._timers.pop(path, None)
+        self._dispatch(event_name, path)
 
     def on_dynamic(self, key, event):
         self.loop.call_soon_threadsafe(
