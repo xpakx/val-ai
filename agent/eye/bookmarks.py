@@ -27,10 +27,7 @@ class BookmarksFileFeature:
         watchdog_feature.add_route(self.db_path, event_name)
         print(self.db_path)
 
-        async def on_db_modified(event):
-            await self.on_db_modified(event)
-
-        app.add_event(event_name, on_db_modified)
+        app.add_event(event_name, self.on_db_modified)
 
     async def on_db_modified(self, event):
         new_bookmarks = await asyncio.to_thread(self._fetch_new_bookmarks_sync)
