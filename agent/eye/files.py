@@ -132,7 +132,8 @@ class WatchdogFeature:
         self.main_event_router.set_handler(handler)
 
         self.observer = Observer()
-        self.observer.schedule(handler, self.path, recursive=True)
+        watch = self.observer.schedule(handler, self.path, recursive=True)
+        self.main_event_router.set_watch(watch)
         self._do_add_routes()
 
         self.observer.start()
