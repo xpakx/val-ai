@@ -50,7 +50,8 @@ class GitIgnoreHandler(FileSystemEventHandler):
 
 
 class WatchdogEventRouter:
-    def __init__(self, loop, app, debounce: float = 0.3):
+    def __init__(self, path, loop, app, debounce: float = 0.3):
+        self.path = path
         self._timers = {}
         self.debounce = debounce
         self.loop = loop
@@ -101,14 +102,13 @@ class WatchdogFeature:
     def __init__(self, path: str = '.', debounce: float = 0.3,
                  ignore_hidden: bool = True):
         self.path = path
-        self._timers = {}
-        self._timers_external = {}
         self.debounce = debounce
         self.ignore_hidden = ignore_hidden
         self.active_watches = {}
-        self.watches_to_add = {}
         self.observer = None
         self.name = 'watchdog'
+        self.loop = None
+        self.app = None
 
     async def run(self, app):
         self.loop = asyncio.get_running_loop()
@@ -118,6 +118,7 @@ class WatchdogFeature:
         spec = self._prepare_ignore_patterns()
 
         self.main_event_router = WatchdogEventRouter(
+                self.path,
                 self.loop,
                 self.app,
                 self.debounce
@@ -172,29 +173,34 @@ class WatchdogFeature:
                     return
                 self.router.on_modified(event)
 
-        router = WatchdogEventRouter(self.loop, self.app, self.debounce)
+        router = WatchdogEventRouter(
+                path, self.loop, self.app, self.debounce)
         router.modified = event_name
         handler = RoutedHandler(router, event_name)
         router.set_handler(handler)
+
+        if self.loop:
+            self._start_router()
+        self.active_watches[path] = router
+
+    def _start_router(self, router: WatchdogEventRouter):
         watch = self.observer.schedule(
-                handler,
-                path=str(path),
+                router.handler,
+                path=str(router.path),
                 recursive=True
         )
-
-        self.active_watches[path] = watch
+        router.set_watch(watch)
 
     def add_route(self, path: str | Path, event_name: str):
         resolved_path = Path(path).resolve()
-        if not self.observer:
-            self.watches_to_add[resolved_path] = event_name
-        else:
-            self._do_add_route(resolved_path, event_name)
+        self._do_add_route(resolved_path, event_name)
 
     def _do_add_routes(self):
-        for path, event in self.watches_to_add.items():
-            self._do_add_route(path, event)
-        self.watches_to_add = {}
+        for path, router in self.active_watches.items():
+            if router.loop is None:
+                router.loop = self.loop
+                router.app = self.app
+                self._start_router(router)
 
     def remove_route(self, path: str | Path):
         resolved_path = Path(path).resolve()
@@ -203,5 +209,3 @@ class WatchdogFeature:
             if handler.watch:
                 self.observer.unschedule(handler.watch)
             del self.active_watches[resolved_path]
-        if resolved_path in self.watches_to_add:
-            del self.watches_to_add[resolved_path]
