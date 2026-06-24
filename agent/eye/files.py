@@ -56,9 +56,14 @@ class WatchdogEventRouter:
         self.loop = loop
         self.app = app
         self.handler = None
+        self.watch = None 
+        self.modified = "file_changed"
 
     def set_handler(self, handler):
         self.handler = handler
+
+    def set_watch(self, watch):
+        self.watch = watch
 
     def on_modified(self, event):
         self.loop.call_soon_threadsafe(
@@ -69,7 +74,7 @@ class WatchdogEventRouter:
             self._timers[path].cancel()
         self._timers[path] = self.loop.call_later(
             self.debounce,
-            lambda: self._dispatch_debounced("file_changed", path)
+            lambda: self._dispatch_debounced(self.modified, path)
         )
 
     def on_created(self, event):
@@ -157,42 +162,24 @@ class WatchdogFeature:
     def stop(self):
         self._stop_event.set()
 
-    def _dispatch(self, event_name: str, path: str):
-        self.loop.create_task(self.app.emit(event_name, path))
-
-    def _dispatch_debounced(self, event_name: str, path: str):
-        self._timers.pop(path, None)
-        self._dispatch(event_name, path)
-
-    def on_dynamic(self, key, event):
-        self.loop.call_soon_threadsafe(
-                self._handle_dynamic, key, event.src_path)
-
-    def _handle_dynamic(self, key, path):
-        if path in self._timers_external:
-            self._timers_external[path].cancel()
-        self._timers_external[path] = self.loop.call_later(
-            self.debounce,
-            lambda: self._dispatch_debounced_ext(key, path)
-        )
-
-    def _dispatch_debounced_ext(self, event_name: str, path: str):
-        self._timers_external.pop(path, None)
-        self._dispatch(event_name, path)
-
     def _do_add_route(self, path: Path, event_name: str):
         class RoutedHandler(FileSystemEventHandler):
             def __init__(self, router, name):
                 self.router = router
-                self.name = name
 
             def dispatch(self, event):
-                self.router.on_dynamic(self.name, event)
+                if event.event_type != 'modified':
+                    return
+                self.router.on_modified(event)
 
+        router = WatchdogEventRouter(self.loop, self.app, self.debounce)
+        router.modified = event_name
+        handler = RoutedHandler(router, event_name)
+        router.set_handler(handler)
         watch = self.observer.schedule(
-            RoutedHandler(self, event_name),
-            path=str(path),
-            recursive=True
+                handler,
+                path=str(path),
+                recursive=True
         )
 
         self.active_watches[path] = watch
@@ -212,7 +199,9 @@ class WatchdogFeature:
     def remove_route(self, path: str | Path):
         resolved_path = Path(path).resolve()
         if resolved_path in self.active_watches:
-            self.observer.unschedule(self.active_watches[resolved_path])
+            handler = self.active_watches[resolved_path]
+            if handler.watch:
+                self.observer.unschedule(handler.watch)
             del self.active_watches[resolved_path]
         if resolved_path in self.watches_to_add:
             del self.watches_to_add[resolved_path]
