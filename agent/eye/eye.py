@@ -1,4 +1,5 @@
 import asyncio
+import secrets
 from typing import Callable
 from agent.eye.files import WatchdogFeature
 from agent.eye.bookmarks import BookmarksFileFeature
@@ -28,9 +29,8 @@ class Eye:
         if not name and hasattr(service_func, "name"):
             name = service_func.name
         if not name:
-            # TODO: random id
-            print("Error: no name for service")
-            return
+            name = self._generate_random_id()
+            # TODO: collisions
         self._services[name] = service_func
 
     def get_service(self, name: str):
@@ -56,6 +56,15 @@ class Eye:
                 tasks.append(asyncio.create_task(service(self)))
         print("App running. Press Ctrl+C to stop.")
         await asyncio.gather(*tasks)
+
+    def _generate_random_id(self):
+        n = secrets.randbits(64)
+        chars = "0123456789abcdefghijklmnopqrstuvwxyz"
+        result = ""
+        while n > 0:
+            n, rem = divmod(n, 36)
+            result = chars[rem] + result
+        return f"{result}"
 
 
 app = Eye()
