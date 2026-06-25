@@ -110,6 +110,11 @@ class WatchdogFeature:
         self.loop = None
         self.app = None
 
+    @property
+    def event(self) -> list[str]:
+        return ["file_moved", "file_changed",
+                "file_created", "file_deleted"]
+
     async def run(self, app):
         self.loop = asyncio.get_running_loop()
         self.app = app

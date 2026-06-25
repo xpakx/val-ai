@@ -17,6 +17,10 @@ class BookmarksFileFeature:
         self.name = 'bookmarks_file'
         self.last_bookmark_timestamp = 0
 
+    @property
+    def event(self) -> list[str]:
+        return ["bookmark_added"]
+
     def init(self, app):
         self.app = app
         watchdog_feature = app.get_service("watchdog")

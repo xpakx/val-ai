@@ -8,6 +8,9 @@ from agent.eye.bookmarks import BookmarksFileFeature
 class EyeService(Protocol):
     def run(self, app: "Eye") -> None: ...
 
+    @property
+    def event(self) -> list[str]: return []
+
 
 class SimpleEyeService(EyeService):
     def __init__(self, func: Callable, name: str):
