@@ -37,7 +37,6 @@ class Eye:
             self._events[event_name] = []
         self._events[event_name].append(func)
 
-    # TODO: fix type
     def add_service(self, service_func: Callable | EyeService,
                     name: str | None = None):
         if not name and hasattr(service_func, "name"):
@@ -69,8 +68,6 @@ class Eye:
             if hasattr(service, 'run'):
                 tasks.append(
                         asyncio.create_task(service.run(self)))
-            else:
-                tasks.append(asyncio.create_task(service(self)))
         print("App running. Press Ctrl+C to stop.")
         await asyncio.gather(*tasks)
 
