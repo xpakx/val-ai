@@ -1,13 +1,14 @@
 import asyncio
-from typing import Callable, Dict, List
+from typing import Callable
 from agent.eye.files import WatchdogFeature
 from agent.eye.bookmarks import BookmarksFileFeature
 
 
 class Eye:
     def __init__(self):
-        self._events: Dict[str, List[Callable]] = {}
-        self._services: List[Callable] = []
+        self._events: dict[str, list[Callable]] = {}
+        # TODO: fix type
+        self._services: dict[str, Callable] = {}
 
     # TODO: smart registration of services
     # TODO: smart params
@@ -22,12 +23,18 @@ class Eye:
             self._events[event_name] = []
         self._events[event_name].append(func)
 
-    def add_service(self, service_func: Callable):
-        self._services.append(service_func)
+    # TODO: fix type
+    def add_service(self, service_func: Callable, name: str | None = None):
+        if not name and hasattr(service_func, "name"):
+            name = service_func.name
+        if not name:
+            # TODO: random id
+            print("Error: no name for service")
+            return
+        self._services[name] = service_func
 
     def get_service(self, name: str):
-        # TODO: proper dict index
-        return next((s for s in self._services if s.name == name), None)
+        return self._services.get(name)
 
     async def emit(self, event_name: str, *args, **kwargs):
         if event_name in self._events:
@@ -39,7 +46,7 @@ class Eye:
 
     async def run(self):
         tasks = []
-        for service in self._services:
+        for _, service in self._services.items():
             if hasattr(service, 'init'):
                 service.init(self)
             if hasattr(service, 'run'):
