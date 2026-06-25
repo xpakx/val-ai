@@ -1,15 +1,28 @@
 import asyncio
 import secrets
-from typing import Callable
+from typing import Callable, Protocol
 from agent.eye.files import WatchdogFeature
 from agent.eye.bookmarks import BookmarksFileFeature
+
+
+class EyeService(Protocol):
+    def run(self, app: "Eye") -> None: ...
+
+
+class SimpleEyeService(EyeService):
+    def __init__(self, func: Callable, name: str):
+        self.name = name
+        self.func = func
+
+    def run(self, app: "Eye") -> None:
+        return self.func(app)
 
 
 class Eye:
     def __init__(self):
         self._events: dict[str, list[Callable]] = {}
         # TODO: fix type
-        self._services: dict[str, Callable] = {}
+        self._services: dict[str, EyeService] = {}
 
     # TODO: smart registration of services
     # TODO: smart params
@@ -25,12 +38,16 @@ class Eye:
         self._events[event_name].append(func)
 
     # TODO: fix type
-    def add_service(self, service_func: Callable, name: str | None = None):
+    def add_service(self, service_func: Callable | EyeService,
+                    name: str | None = None):
         if not name and hasattr(service_func, "name"):
             name = service_func.name
         if not name:
             name = self._generate_random_id()
             # TODO: collisions
+        if not hasattr(service_func, 'run'):
+            service_func = SimpleEyeService(service_func, name)
+            print(service_func)
         self._services[name] = service_func
 
     def get_service(self, name: str):
