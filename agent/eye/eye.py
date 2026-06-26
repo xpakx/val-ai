@@ -1,7 +1,9 @@
 import asyncio
 import secrets
+import inspect
 from typing import Callable, Protocol
 from dataclasses import dataclass
+
 from agent.eye.files import WatchdogFeature
 from agent.eye.bookmarks import BookmarksFileFeature
 
@@ -25,16 +27,15 @@ class SimpleEyeService(EyeService):
 @dataclass
 class EventHandler():
     func: Callable
+    args: list[str]
 
 
 class Eye:
     def __init__(self):
         self._events: dict[str, list[EventHandler]] = {}
-        # TODO: fix type
         self._services: dict[str, EyeService] = {}
 
     # TODO: smart registration of services
-    # TODO: smart params
     def on(self, event_name: str):
         def decorator(func: Callable):
             self.add_event(event_name, func)
@@ -42,10 +43,15 @@ class Eye:
         return decorator
 
     def add_event(self, event_name: str, func: Callable):
-        handler = EventHandler(func)
+        handler = self._prepare_event_handler(event_name, func)
         if event_name not in self._events:
             self._events[event_name] = []
         self._events[event_name].append(handler)
+
+    def _prepare_event_handler(self, event_name: str, func: Callable):
+        sig = inspect.signature(func)
+        args = list(sig.parameters.keys())
+        return EventHandler(func, args)
 
     def add_service(self, service_func: Callable | EyeService,
                     name: str | None = None) -> str:
@@ -63,6 +69,7 @@ class Eye:
     def get_service(self, name: str):
         return self._services.get(name)
 
+    # TODO: smart params
     async def emit(self, event_name: str, *args, **kwargs):
         if event_name in self._events:
             tasks = [handler.func(*args, **kwargs) for handler in self._events[event_name]]
