@@ -69,14 +69,28 @@ class Eye:
     def get_service(self, name: str):
         return self._services.get(name)
 
-    # TODO: smart params
-    async def emit(self, event_name: str, *args, **kwargs):
-        if event_name in self._events:
-            tasks = [handler.func(*args, **kwargs) for handler in self._events[event_name]]
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            for res in results:
-                if isinstance(res, Exception):
-                    print(f"Error in handler for {event_name}: {res}")
+    async def emit(self, event_name: str, **kwargs):
+        if event_name not in self._events:
+            return
+        tasks = []
+        for handler in self._events[event_name]:
+            self.prepare_event(handler, tasks, kwargs)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        for res in results:
+            if isinstance(res, Exception):
+                print(f"Error in handler for {event_name}: {res}")
+
+    # TODO: perhaps a class for event context
+    # TODO: services to inject
+    def prepare_event(
+            self, handler: EventHandler, tasks: list, ctx):
+        args = []
+        for arg_name in handler.args:
+            if arg_name in ctx:
+                args.append(ctx[arg_name])
+            else:
+                args.append(None)
+        tasks.append(handler.func(*args))
 
     async def run(self):
         tasks = []
@@ -104,7 +118,7 @@ app = Eye()
 
 async def fake_sevice(app):
     while True:
-        await app.emit("data_received", {"id": 1, "value": 100})
+        await app.emit("data_received", data={"id": 1, "value": 100})
         await asyncio.sleep(5)
 
 

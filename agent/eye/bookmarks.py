@@ -40,7 +40,7 @@ class BookmarksFileFeature:
             return
         self.last_bookmark_timestamp = new_bookmarks[-1]["date_added"]
         for bm in new_bookmarks:
-            await self.app.emit('bookmark_added', bm)
+            await self.app.emit('bookmark_added', bookmark=bm)
 
     async def run(self, app):
         pass

@@ -91,7 +91,7 @@ class WatchdogEventRouter:
                 self._dispatch, "file_moved", event.src_path)
 
     def _dispatch(self, event_name: str, path: str):
-        self.loop.create_task(self.app.emit(event_name, path))
+        self.loop.create_task(self.app.emit(event_name, path=path))
 
     def _dispatch_debounced(self, event_name: str, path: str):
         self._timers.pop(path, None)
