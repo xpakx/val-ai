@@ -41,7 +41,7 @@ class Eye:
         self._events[event_name].append(func)
 
     def add_service(self, service_func: Callable | EyeService,
-                    name: str | None = None):
+                    name: str | None = None) -> str:
         if not name and hasattr(service_func, "name"):
             name = service_func.name
         if not name:
@@ -51,6 +51,7 @@ class Eye:
             service_func = SimpleEyeService(service_func, name)
             print(service_func)
         self._services[name] = service_func
+        return name
 
     def get_service(self, name: str):
         return self._services.get(name)
