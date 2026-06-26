@@ -88,6 +88,8 @@ class Eye:
         for arg_name in handler.args:
             if arg_name in ctx:
                 args.append(ctx[arg_name])
+            elif arg_name == 'event':
+                args.append(ctx)
             else:
                 args.append(None)
         tasks.append(handler.func(*args))
