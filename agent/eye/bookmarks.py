@@ -2,9 +2,10 @@ import asyncio
 from pathlib import Path
 from agent.bookmarks.loader import find_firefox_db
 import sqlite3
+from agent.eye.eye import EyeService
 
 
-class BookmarksFileFeature:
+class BookmarksFileFeature(EyeService):
     def __init__(self, path: str = '.', debounce: float = 0.3,
                  ignore_hidden: bool = True):
         self.path = path
@@ -75,6 +76,3 @@ class BookmarksFileFeature:
             print(f"SQLite reading error: {e}")
 
         return new_bookmarks
-
-    def has_logic(self):
-        return False

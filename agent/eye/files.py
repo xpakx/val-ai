@@ -1,6 +1,7 @@
 import asyncio
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from agent.eye.eye import EyeService
 from pathspec import PathSpec
 from pathlib import Path
 
@@ -98,7 +99,7 @@ class WatchdogEventRouter:
         self._dispatch(event_name, path)
 
 
-class WatchdogFeature:
+class WatchdogFeature(EyeService):
     def __init__(self, path: str = '.', debounce: float = 0.3,
                  ignore_hidden: bool = True):
         self.path = path
@@ -215,6 +216,3 @@ class WatchdogFeature:
             if handler.watch:
                 self.observer.unschedule(handler.watch)
             del self.active_watches[resolved_path]
-
-    def has_logic(self):
-        return False
