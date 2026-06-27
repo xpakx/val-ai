@@ -14,7 +14,7 @@ class EyeService(Protocol):
     @property
     def event(self) -> list[str]: return []
     def has_logic(self) -> bool: return False
-    def get_injectable(self) -> Any | None: return None
+    def get_injectable(self) -> Any | None | dict[str, Any]: return None
 
 
 class SimpleEyeService(EyeService):
@@ -69,7 +69,12 @@ class Eye:
         self._services[name] = service_func
         if service_func.has_logic():
             injectable = service_func.get_injectable()
-            self._injectables[service_func.name] = injectable
+            if isinstance(injectable, dict):
+                collisions = self._injectables.keys() & injectable.keys()
+                if collisions:
+                    print(f"Warning: Overwriting keys: {collisions}")
+            else:
+                self._injectables[service_func.name] = injectable
         return name
 
     def get_service(self, name: str):
