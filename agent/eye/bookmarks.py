@@ -75,3 +75,6 @@ class BookmarksFileFeature:
             print(f"SQLite reading error: {e}")
 
         return new_bookmarks
+
+    def has_logic(self):
+        return False

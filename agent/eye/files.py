@@ -215,3 +215,6 @@ class WatchdogFeature:
             if handler.watch:
                 self.observer.unschedule(handler.watch)
             del self.active_watches[resolved_path]
+
+    def has_logic(self):
+        return False

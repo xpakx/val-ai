@@ -13,6 +13,8 @@ class EyeService(Protocol):
 
     @property
     def event(self) -> list[str]: return []
+    def has_logic(self) -> bool: return False
+    def get_injectable(self) -> Any | None: return None
 
 
 class SimpleEyeService(EyeService):
@@ -65,6 +67,9 @@ class Eye:
             service_func = SimpleEyeService(service_func, name)
             print(service_func)
         self._services[name] = service_func
+        if service_func.has_logic():
+            injectable = service_func.get_injectable()
+            self._injectables[service_func.name] = injectable
         return name
 
     def get_service(self, name: str):
