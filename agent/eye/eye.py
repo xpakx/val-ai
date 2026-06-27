@@ -1,7 +1,7 @@
 import asyncio
 import secrets
 import inspect
-from typing import Callable, Protocol
+from typing import Callable, Protocol, Any
 from dataclasses import dataclass
 
 from agent.eye.files import WatchdogFeature
@@ -34,6 +34,7 @@ class Eye:
     def __init__(self):
         self._events: dict[str, list[EventHandler]] = {}
         self._services: dict[str, EyeService] = {}
+        self._injectables: dict[str, Any] = {}
 
     # TODO: smart registration of services
     def on(self, event_name: str):
@@ -81,13 +82,14 @@ class Eye:
                 print(f"Error in handler for {event_name}: {res}")
 
     # TODO: perhaps a class for event context
-    # TODO: services to inject
     def prepare_event(
             self, handler: EventHandler, tasks: list, ctx):
         args = []
         for arg_name in handler.args:
             if arg_name in ctx:
                 args.append(ctx[arg_name])
+            elif arg_name in self._injectables:
+                args.append(self._injectables.get(arg_name))
             elif arg_name == 'event':
                 args.append(ctx)
             else:
@@ -113,6 +115,9 @@ class Eye:
             n, rem = divmod(n, 36)
             result = chars[rem] + result
         return f"{result}"
+
+    def add_injectable(self, name: str, injectable: Any):
+        self._injectables[name] = injectable
 
 
 app = Eye()
@@ -150,8 +155,8 @@ async def on_git(path):
 
 
 @app.on("bookmark_added")
-async def on_bookmark(bm):
-    print(f" - {bm['title'] or 'No Title'}: {bm['url']}")
+async def on_bookmark(bookmark):
+    print(f" - {bookmark['title'] or 'No Title'}: {bookmark['url']}")
 
 # app.add_service(fake_sevice)
 app.add_service(WatchdogFeature())
