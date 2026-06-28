@@ -2,12 +2,16 @@ import asyncio
 from agent.eye.eye import Eye, EyeService
 from typing import Callable
 from inspect import iscoroutinefunction
+from dataclasses import dataclass
+
+
+FlowStep = Callable | str
 
 
 class FlowFeature(EyeService):
     def __init__(
             self, name: str,
-            flow_definition: list[Callable | tuple[Callable, ...]],
+            flow_definition: list[FlowStep | tuple[FlowStep, ...]],
             ):
         self.name = name
         self.flow_definition = flow_definition
@@ -26,8 +30,10 @@ class FlowFeature(EyeService):
             loop_count += 1
             await asyncio.sleep(2.0)
 
-    async def _execute_step(self, app: Eye, step: Callable) -> None:
-        if iscoroutinefunction(step):
+    async def _execute_step(self, app: Eye, step: FlowStep) -> None:
+        if isinstance(step, str):
+            await app.emit(step)
+        elif iscoroutinefunction(step):
             await step(app)
         elif callable(step):
             step(app)
@@ -50,13 +56,16 @@ if __name__ == "__main__":
     def step4(app: Eye):
         print("step 4")
 
-    flow = [step1, (step2, step3), step4]
+    flow = [step1, "interrupting_event", (step2, step3), step4]
     app = Eye()
     app.add_service(FlowFeature("test", flow))
 
     @app.on('test:loop_done')
     async def on_loop_done(loop: int):
         print(f"test: starting loop {loop}")
+    @app.on('interrupting_event')
+    async def on_event():
+        print("interruption")
     try:
         asyncio.run(app.run())
     except KeyboardInterrupt:
