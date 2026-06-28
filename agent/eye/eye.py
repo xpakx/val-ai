@@ -71,6 +71,7 @@ class Eye:
                 collisions = self._injectables.keys() & injectable.keys()
                 if collisions:
                     print(f"Warning: Overwriting keys: {collisions}")
+                self._injectables.update(injectable)
             else:
                 self._injectables[service_func.name] = injectable
         return name
