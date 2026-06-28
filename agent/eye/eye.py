@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 
 class EyeService(Protocol):
-    def run(self, app: "Eye") -> None: ...
+    async def run(self, app: "Eye") -> None: ...
 
     @property
     def event(self) -> list[str]: return []
