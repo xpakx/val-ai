@@ -1,8 +1,8 @@
 import asyncio
 from agent.eye.eye import Eye, EyeService
-from typing import Callable
+from typing import Callable, Any, Self
 from inspect import iscoroutinefunction
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -13,6 +13,16 @@ class WaitFor:
 FlowStep = Callable | str | WaitFor
 
 
+@dataclass
+class LoopContext:
+    count: int
+    pending_signals: dict[str, asyncio.Event] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
+
+    def next(self) -> Self:
+        return LoopContext(count=self.count+1)
+
+
 class FlowFeature(EyeService):
     def __init__(
             self, name: str,
@@ -20,39 +30,39 @@ class FlowFeature(EyeService):
             ):
         self.name = name
         self.flow_definition = flow_definition
-        self._pending_signals: dict[str, asyncio.Event] = {}
+        self.loop = LoopContext(0)
 
     # TODO: currently this needs to be called manually,
     # but we want to just auto-register event listener later on
     def resume_signal(self, signal_name: str):
-        if signal_name in self._pending_signals:
-            self._pending_signals[signal_name].set()
+        if signal_name in self.loop.pending_signals:
+            self.loop.pending_signals[signal_name].set()
 
     async def run(self, app: Eye) -> None:
-        loop_count = 1
         while True:
             # TODO: in the future we might want to dispatch
             # multiple runs in parallel every time we
             # receive some signal
-            await self.run_once(app, loop_count)
-            loop_count += 1
+            await self.run_once(app, self.loop)
+            self.loop = self.loop.next()
 
-    async def run_once(self, app: Eye, loop_count: int) -> None:
+    async def run_once(self, app: Eye, ctx: LoopContext) -> None:
         for step_group in self.flow_definition:
             if isinstance(step_group, tuple):
-                tasks = [self._execute_step(app, s) for s in step_group]
+                tasks = [self._execute_step(app, s, ctx) for s in step_group]
                 await asyncio.gather(*tasks)
             else:
-                await self._execute_step(app, step_group)
+                await self._execute_step(app, step_group, ctx)
 
-        await app.emit(f"{self.name}:loop_done", loop=loop_count)
+        await app.emit(f"{self.name}:loop_done", loop=ctx)
 
-    async def _execute_step(self, app: Eye, step: FlowStep) -> None:
+    async def _execute_step(
+            self, app: Eye, step: FlowStep, ctx: LoopContext) -> None:
         if isinstance(step, WaitFor):
             event = asyncio.Event()
-            self._pending_signals[step.signal_name] = event
+            ctx.pending_signals[step.signal_name] = event
             await event.wait()
-            self._pending_signals.pop(step.signal_name, None)
+            ctx.pending_signals.pop(step.signal_name, None)
         elif isinstance(step, str):
             await app.emit(step)
         elif iscoroutinefunction(step):
@@ -85,8 +95,8 @@ if __name__ == "__main__":
     app.add_service(WatchdogFeature())
 
     @app.on('test:loop_done')
-    async def on_loop_done(loop: int):
-        print(f"test: starting loop {loop}")
+    async def on_loop_done(loop):
+        print(f"test: starting loop {loop.count}")
     @app.on('interrupting_event')
     async def on_event():
         print("interruption")
