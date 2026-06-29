@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 @dataclass
 class WaitFor:
     signal_name: str
+    listening: bool = False
 
 
 FlowStep = Callable | str | WaitFor
@@ -34,9 +35,8 @@ class FlowFeature(EyeService):
         self.loop = LoopContext(0)
         self.deployable = deployable
         self.deployed = False  # TODO: this is temporary
+        self.app = None
 
-    # TODO: currently this needs to be called manually,
-    # but we want to just auto-register event listener later on
     def resume_signal(self, signal_name: str):
         if signal_name in self.loop.pending_signals:
             self.loop.pending_signals[signal_name].set()
@@ -44,6 +44,16 @@ class FlowFeature(EyeService):
     def init(self, app: Eye) -> None:
         if self.deployable:
             app.add_event(f"{self.name}:start", self.on_deployment)
+        self.app = app
+
+    def _listen(self, wait_for: WaitFor):
+        if wait_for.listening:
+            return
+
+        async def on_signal():
+            self.resume_signal(wait_for.signal_name)
+        app.add_event(wait_for.signal_name, on_signal)
+        wait_for.listening = True
 
     async def on_deployment(self, event):
         if self.deployed:
@@ -76,6 +86,7 @@ class FlowFeature(EyeService):
     async def _execute_step(
             self, app: Eye, step: FlowStep, ctx: LoopContext) -> None:
         if isinstance(step, WaitFor):
+            self._listen(step)
             event = asyncio.Event()
             ctx.pending_signals[step.signal_name] = event
             await event.wait()
@@ -120,9 +131,8 @@ if __name__ == "__main__":
     @app.on('file_changed')
     async def on_file(path):
         print(f"FILE: {path}")
-        service = app.get_service('test')
-        if service:
-            service.resume_signal('test')
+        await app.emit('test')
+
     try:
         asyncio.run(app.run())
     except KeyboardInterrupt:
