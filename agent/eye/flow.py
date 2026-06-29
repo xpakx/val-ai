@@ -31,16 +31,21 @@ class FlowFeature(EyeService):
     async def run(self, app: Eye) -> None:
         loop_count = 1
         while True:
-            for step_group in self.flow_definition:
-                if isinstance(step_group, tuple):
-                    tasks = [self._execute_step(app, s) for s in step_group]
-                    await asyncio.gather(*tasks)
-                else:
-                    await self._execute_step(app, step_group)
-
-            await app.emit(f"{self.name}:loop_done", loop=loop_count)
+            # TODO: in the future we might want to dispatch
+            # multiple runs in parallel every time we
+            # receive some signal
+            await self.run_once(app, loop_count)
             loop_count += 1
-            await asyncio.sleep(2.0)
+
+    async def run_once(self, app: Eye, loop_count: int) -> None:
+        for step_group in self.flow_definition:
+            if isinstance(step_group, tuple):
+                tasks = [self._execute_step(app, s) for s in step_group]
+                await asyncio.gather(*tasks)
+            else:
+                await self._execute_step(app, step_group)
+
+        await app.emit(f"{self.name}:loop_done", loop=loop_count)
 
     async def _execute_step(self, app: Eye, step: FlowStep) -> None:
         if isinstance(step, WaitFor):
