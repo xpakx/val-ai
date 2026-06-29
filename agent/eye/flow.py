@@ -5,7 +5,12 @@ from inspect import iscoroutinefunction
 from dataclasses import dataclass
 
 
-FlowStep = Callable | str
+@dataclass
+class WaitFor:
+    signal_name: str
+
+
+FlowStep = Callable | str | WaitFor
 
 
 class FlowFeature(EyeService):
@@ -15,6 +20,13 @@ class FlowFeature(EyeService):
             ):
         self.name = name
         self.flow_definition = flow_definition
+        self._pending_signals: dict[str, asyncio.Event] = {}
+
+    # TODO: currently this needs to be called manually,
+    # but we want to just auto-register event listener later on
+    def resume_signal(self, signal_name: str):
+        if signal_name in self._pending_signals:
+            self._pending_signals[signal_name].set()
 
     async def run(self, app: Eye) -> None:
         loop_count = 1
@@ -31,7 +43,12 @@ class FlowFeature(EyeService):
             await asyncio.sleep(2.0)
 
     async def _execute_step(self, app: Eye, step: FlowStep) -> None:
-        if isinstance(step, str):
+        if isinstance(step, WaitFor):
+            event = asyncio.Event()
+            self._pending_signals[step.signal_name] = event
+            await event.wait()
+            self._pending_signals.pop(step.signal_name, None)
+        elif isinstance(step, str):
             await app.emit(step)
         elif iscoroutinefunction(step):
             await step(app)
@@ -56,9 +73,11 @@ if __name__ == "__main__":
     def step4(app: Eye):
         print("step 4")
 
-    flow = [step1, "interrupting_event", (step2, step3), step4]
+    flow = [step1, "interrupting_event", (step2, step3), step4, WaitFor('test')]
     app = Eye()
     app.add_service(FlowFeature("test", flow))
+    from .files import WatchdogFeature
+    app.add_service(WatchdogFeature())
 
     @app.on('test:loop_done')
     async def on_loop_done(loop: int):
@@ -66,6 +85,12 @@ if __name__ == "__main__":
     @app.on('interrupting_event')
     async def on_event():
         print("interruption")
+    @app.on('file_changed')
+    async def on_file(path):
+        print(f"FILE: {path}")
+        service = app.get_service('test')
+        if service:
+            service.resume_signal('test')
     try:
         asyncio.run(app.run())
     except KeyboardInterrupt:
