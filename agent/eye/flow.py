@@ -27,10 +27,13 @@ class FlowFeature(EyeService):
     def __init__(
             self, name: str,
             flow_definition: list[FlowStep | tuple[FlowStep, ...]],
+            deployable: bool = False
             ):
         self.name = name
         self.flow_definition = flow_definition
         self.loop = LoopContext(0)
+        self.deployable = deployable
+        self.deployed = False  # TODO: this is temporary
 
     # TODO: currently this needs to be called manually,
     # but we want to just auto-register event listener later on
@@ -38,7 +41,21 @@ class FlowFeature(EyeService):
         if signal_name in self.loop.pending_signals:
             self.loop.pending_signals[signal_name].set()
 
+    def init(self, app: Eye) -> None:
+        if self.deployable:
+            app.add_event(f"{self.name}:start", self.on_deployment)
+
+    async def on_deployment(self, event):
+        if self.deployed:
+            return
+        self.deployed = True
+        await self.run_once(app, self.loop)
+        self.loop = self.loop.next()
+        self.deployed = False
+
     async def run(self, app: Eye) -> None:
+        if self.deployable:
+            return
         while True:
             # TODO: in the future we might want to dispatch
             # multiple runs in parallel every time we
