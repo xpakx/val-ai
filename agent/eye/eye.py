@@ -27,6 +27,7 @@ class SimpleEyeService(EyeService):
 class EventHandler():
     func: Callable
     args: list[str]
+    event: str
 
 
 class Eye:
@@ -42,17 +43,24 @@ class Eye:
             return func
         return decorator
 
-    def add_event(self, event_name: str, func: Callable) -> None:
+    def add_event(self, event_name: str, func: Callable) -> EventHandler:
         handler = self._prepare_event_handler(event_name, func)
         if event_name not in self._events:
             self._events[event_name] = []
         self._events[event_name].append(handler)
+        return handler
+
+    def remove_event(self, handler: EventHandler) -> None:
+        event = self._events.get(handler.event)
+        if not event:
+            return
+        event.remove(handler)
 
     def _prepare_event_handler(
             self, event_name: str, func: Callable) -> EventHandler:
         sig = inspect.signature(func)
         args = list(sig.parameters.keys())
-        return EventHandler(func, args)
+        return EventHandler(func=func, args=args, event=event_name)
 
     def add_service(self, service_func: Callable | EyeService,
                     name: str | None = None) -> str:

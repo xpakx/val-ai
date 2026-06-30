@@ -69,18 +69,10 @@ class FlowFeature(EyeService):
     def _listen(self, wait_for: WaitFor, loop: LoopContext):
         async def on_signal():
             self.resume_signal(loop.count, wait_for.signal_name)
-        app.add_event(wait_for.signal_name, on_signal)
+        return app.add_event(wait_for.signal_name, on_signal)
 
-        # TODO: this should be solved an app level
-        events = app._events.get(wait_for.signal_name)
-        for event in events:
-            if event.func == on_signal:
-                return event
-
-    def _unlisten(self, wait_for: WaitFor, event):
-        # TODO: this should be solved an app level
-        events = app._events.get(wait_for.signal_name)
-        events.remove(event)
+    def _unlisten(self, event):
+        app.remove_event(event)
 
     async def on_deployment(self, event):
         loop = self.get_loop()
@@ -111,7 +103,7 @@ class FlowFeature(EyeService):
             ctx.pending_signals[step.signal_name] = event
             await event.wait()
             ctx.pending_signals.pop(step.signal_name, None)
-            self._unlisten(step, app_event)
+            self._unlisten(app_event)
         elif isinstance(step, str):
             await app.emit(step)
         elif iscoroutinefunction(step):
