@@ -59,9 +59,16 @@ class FlowFeature(EyeService):
             self.resume_signal(loop.count, wait_for.signal_name)
         app.add_event(wait_for.signal_name, on_signal)
 
-    def _unlisten(self, wait_for: WaitFor, loop: LoopContext):
-        # TODO: we need to unregister staled signals
-        pass
+        # TODO: this should be solved an app level
+        events = app._events.get(wait_for.signal_name)
+        for event in events:
+            if event.func == on_signal:
+                return event
+
+    def _unlisten(self, wait_for: WaitFor, event):
+        # TODO: this should be solved an app level
+        events = app._events.get(wait_for.signal_name)
+        events.remove(event)
 
     async def on_deployment(self, event):
         loop = self.get_loop()
@@ -87,12 +94,12 @@ class FlowFeature(EyeService):
     async def _execute_step(
             self, app: Eye, step: FlowStep, ctx: LoopContext) -> None:
         if isinstance(step, WaitFor):
-            self._listen(step, ctx)
+            app_event = self._listen(step, ctx)
             event = asyncio.Event()
             ctx.pending_signals[step.signal_name] = event
             await event.wait()
             ctx.pending_signals.pop(step.signal_name, None)
-            self._unlisten(step, ctx)
+            self._unlisten(step, app_event)
         elif isinstance(step, str):
             await app.emit(step)
         elif iscoroutinefunction(step):
