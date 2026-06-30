@@ -43,6 +43,18 @@ class FlowFeature(EyeService):
         if signal_name in loop.pending_signals:
             loop.pending_signals[signal_name].set()
 
+    @property
+    def event(self) -> list[str]:
+        events = [f"{self.name}:loop_done"]
+        for step_group in self.flow_definition:
+            if isinstance(step_group, tuple):
+                for step in step_group:
+                    if isinstance(step, str):
+                        events.append(step)
+            elif isinstance(step_group, str):
+                events.append(step_group)
+        return events
+
     def init(self, app: Eye) -> None:
         if self.deployable:
             app.add_event(f"{self.name}:start", self.on_deployment)
