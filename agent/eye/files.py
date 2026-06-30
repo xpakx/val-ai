@@ -58,7 +58,7 @@ class WatchdogEventRouter:
         self.loop = loop
         self.app = app
         self.handler = None
-        self.watch = None 
+        self.watch = None
         self.modified = "file_changed"
 
     def set_handler(self, handler):

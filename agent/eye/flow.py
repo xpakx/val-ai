@@ -111,21 +111,29 @@ class FlowFeature(EyeService):
 
 
 if __name__ == "__main__":
-    def step1(app: Eye):
+    async def step1(app: Eye):
         print("step 1")
 
     async def step2(app: Eye):
         print("step 2")
         await asyncio.sleep(1.5)
         print("step 2 done")
+
     async def step3(app: Eye):
         print("step 3")
         await asyncio.sleep(0.5)
         print("step 3 done")
+
     def step4(app: Eye):
         print("step 4")
 
-    flow = [step1, "interrupting_event", (step2, step3), step4, WaitFor('test')]
+    flow = [
+            step1,
+            "interrupting_event",
+            (step2, step3),
+            step4,
+            WaitFor('test')
+    ]
     app = Eye()
     app.add_service(FlowFeature("test", flow))
     from .files import WatchdogFeature
@@ -134,9 +142,11 @@ if __name__ == "__main__":
     @app.on('test:loop_done')
     async def on_loop_done(loop):
         print(f"test: starting loop {loop.count}")
+
     @app.on('interrupting_event')
     async def on_event():
         print("interruption")
+
     @app.on('file_changed')
     async def on_file(path):
         print(f"FILE: {path}")
