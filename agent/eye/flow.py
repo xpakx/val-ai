@@ -8,7 +8,6 @@ from dataclasses import dataclass, field
 @dataclass
 class WaitFor:
     signal_name: str
-    listening: bool = False
 
 
 FlowStep = Callable | str | WaitFor
@@ -32,46 +31,48 @@ class FlowFeature(EyeService):
             ):
         self.name = name
         self.flow_definition = flow_definition
-        self.loop = LoopContext(0)
+        self.next_loop_id = 0
+        self.loops: dict[int, LoopContext] = {}
         self.deployable = deployable
-        self.deployed = False  # TODO: this is temporary
         self.app = None
 
-    def resume_signal(self, signal_name: str):
-        if signal_name in self.loop.pending_signals:
-            self.loop.pending_signals[signal_name].set()
+    def resume_signal(self, loop_id: int, signal_name: str):
+        loop = self.loops.get(loop_id)
+        if not loop:
+            return
+        if signal_name in loop.pending_signals:
+            loop.pending_signals[signal_name].set()
 
     def init(self, app: Eye) -> None:
         if self.deployable:
             app.add_event(f"{self.name}:start", self.on_deployment)
         self.app = app
 
-    def _listen(self, wait_for: WaitFor):
-        if wait_for.listening:
-            return
+    def get_loop(self) -> LoopContext:
+        loop = LoopContext(self.next_loop_id)
+        self.next_loop_id += 1
+        self.loops[loop.count] = loop
+        return loop
 
+    def _listen(self, wait_for: WaitFor, loop: LoopContext):
         async def on_signal():
-            self.resume_signal(wait_for.signal_name)
+            self.resume_signal(loop.count, wait_for.signal_name)
         app.add_event(wait_for.signal_name, on_signal)
-        wait_for.listening = True
+
+    def _unlisten(self, wait_for: WaitFor, loop: LoopContext):
+        # TODO: we need to unregister staled signals
+        pass
 
     async def on_deployment(self, event):
-        if self.deployed:
-            return
-        self.deployed = True
-        await self.run_once(app, self.loop)
-        self.loop = self.loop.next()
-        self.deployed = False
+        loop = self.get_loop()
+        await self.run_once(app, loop)
 
     async def run(self, app: Eye) -> None:
         if self.deployable:
             return
         while True:
-            # TODO: in the future we might want to dispatch
-            # multiple runs in parallel every time we
-            # receive some signal
-            await self.run_once(app, self.loop)
-            self.loop = self.loop.next()
+            loop = self.get_loop()
+            await self.run_once(app, loop)
 
     async def run_once(self, app: Eye, ctx: LoopContext) -> None:
         for step_group in self.flow_definition:
@@ -86,11 +87,12 @@ class FlowFeature(EyeService):
     async def _execute_step(
             self, app: Eye, step: FlowStep, ctx: LoopContext) -> None:
         if isinstance(step, WaitFor):
-            self._listen(step)
+            self._listen(step, ctx)
             event = asyncio.Event()
             ctx.pending_signals[step.signal_name] = event
             await event.wait()
             ctx.pending_signals.pop(step.signal_name, None)
+            self._unlisten(step, ctx)
         elif isinstance(step, str):
             await app.emit(step)
         elif iscoroutinefunction(step):
