@@ -58,7 +58,7 @@ class Client:
         }
 
         if tools:
-            payload["tools"] = tools
+            payload["tools"] = msgspec.to_builtins(tools)
         if tool_choice:
             payload["tool_choice"] = tool_choice
 

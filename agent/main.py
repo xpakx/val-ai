@@ -41,26 +41,9 @@ def test():
     conv = Context()
     conv.push('user', 'could you tell me what is in the Makefile?')
     read_tool = get_tool(read_file)
-    tool = {
-            'type': 'function',
-            'function': {
-                'name': read_tool.name,
-                'description': 'Reads the file on filesystem in a folder agent runs in',
-                'parameters': {
-                    'type': 'object',
-                    'properties': {
-                        'path': {
-                            'type': 'string',
-                            'description': 'path to file'
-                        }
-                    },
-                    'required': ['path']
-                }
-            }
-    }
     client.call_api_with_tools(
             conv.get_messages(),
-            [tool]
+            [read_tool.description.generate_call()]
     )
 
 

@@ -1,7 +1,41 @@
 import inspect
-from typing import Callable, Any
+from typing import Callable, Any, Literal
 from dataclasses import dataclass
 from agent.prompt.prompt import Prompt
+import msgspec
+
+
+class Property(msgspec.Struct, omit_defaults=True):
+    type: Literal[
+            "string", "number", "integer",
+            "boolean", "array", "object", "null"]
+    description: str | None = None
+    enum: list[str | int | float] | None = None
+    # for array
+    items: "Property | None" = None
+    # for objuect
+    properties: dict[str, "Property"] | None = None
+    required: list[str] | None = None
+    additionalProperties: bool | None = None
+
+
+class Parameters(msgspec.Struct):
+    type: Literal["object"] = "object"
+    properties: dict[str, Property] = msgspec.UNSET
+    required: list[str] = msgspec.UNSET
+    additionalProperties: bool = msgspec.UNSET
+
+
+class FunctionDefinition(msgspec.Struct, omit_defaults=True):
+    name: str
+    description: str | None = None
+    parameters: Parameters | None = None
+    strict: bool | None = None
+
+
+class ToolCall(msgspec.Struct, kw_only=True):
+    type: Literal["function"] = "function"
+    function: FunctionDefinition
 
 
 class ToolDescription(Prompt):
@@ -62,6 +96,51 @@ class ToolDescription(Prompt):
                 output.append(f"- `{param_name}` ({type_str}){default_str}")
 
         return "\n".join(output)
+
+    def generate_call(self) -> ToolCall:
+        func_doc = inspect.getdoc(self.target_function)
+        if (not func_doc):
+            raise Exception('Tool does not have description')
+
+        sig = inspect.signature(self.target_function)
+
+        properties = {}
+        required = []
+
+        if sig.parameters:
+            for param_name, param in sig.parameters.items():
+                type_str = self._format_type(param.annotation)
+                print(type_str)
+                if type_str == 'str':
+                    properties[param_name] = Property(
+                            type='string'
+                    )
+                elif type_str == 'int':
+                    properties[param_name] = Property(
+                            type='integer'
+                    )
+                elif type_str == 'float':
+                    properties[param_name] = Property(
+                            type='number'
+                    )
+                elif type_str == 'bool':
+                    properties[param_name] = Property(
+                            type='boolean'
+                    )
+
+                if param.default is inspect.Parameter.empty:
+                    required.append(param_name)
+        params = Parameters(
+                properties=properties,
+        )
+        if required:
+            params.required = required
+        definition = FunctionDefinition(
+                name=self.func_name,
+                description=func_doc,
+                parameters=params,
+        )
+        return ToolCall(function=definition)
 
 
 @dataclass
