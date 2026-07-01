@@ -21,6 +21,7 @@ class Chat:
         self,
         client: Client,
         ui: UIProvider,
+        tool_support: bool = False
     ):
         self.client = client
         self.tools: dict[str, ToolDefinition] = {}
@@ -28,6 +29,7 @@ class Chat:
         self.system_prompt_parts: list[SystemPromptInformation] = []
         self.ui = ui
         self.show_tools = signal(True)
+        self.tools_support = tool_support
         self.prepare_prompt()
 
     def prepare_prompt(self):
@@ -42,6 +44,8 @@ class Chat:
             self.info_subprompt.add_part(part)
         self.prompt.add_part(self.info_subprompt)
 
+        if self.tools_support:
+            return
         self.tools_subprompt = Prompt("# TOOLS\n")
         self.tools_subprompt.bind_visibility(self.show_tools)
         for tool in self.tools.values():
@@ -113,6 +117,8 @@ class Chat:
 
     def add_tool(self, tool: ToolDefinition):
         self.tools[tool.name] = tool
+        if self.tools_support:
+            return
         self.tools_subprompt.add_part(tool.description)
 
     def call_tool(self, call: ToolCall):
