@@ -81,6 +81,7 @@ class Client:
             print(response.text)
             raise Exception()
 
+        print(response.text)
         if response.status_code == 200:
             return msgspec.json.decode(response.text, type=OpenAIResponse)
         else:

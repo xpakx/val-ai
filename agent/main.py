@@ -41,10 +41,11 @@ def test():
     conv = Context()
     conv.push('user', 'could you tell me what is in the Makefile?')
     read_tool = get_tool(read_file)
-    client.call_api_with_tools(
+    resp = client.call_api_with_tools(
             conv.get_messages(),
             [read_tool.description.generate_call()]
     )
+    print(resp)
 
 
 if __name__ == "__main__":

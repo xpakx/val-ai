@@ -27,11 +27,26 @@ class ToolCall(Base, tag="tool"):
 Message = TextMessage | ToolCall
 
 
+class OpenAIFunc(msgspec.Struct):
+    arguments: str
+    name: str
+
+
+class OpenAIToolCall(msgspec.Struct):
+    extra_content: dict[str, dict[str, str]]  # TODO: prolly a bad idea
+    function: OpenAIFunc
+    id: str
+    type: Literal["function"] = "function"
+
+
 class OpenAIMessage(msgspec.Struct):
-    content: str
+    content: str | None = None
+    tool_calls: list[OpenAIToolCall] | None = None
 
 
 class OpenAIChoice(msgspec.Struct):
+    finish_reason: Literal["stop", "tool_calls"]
+    index: int
     message: OpenAIMessage
 
 
