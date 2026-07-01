@@ -5,6 +5,7 @@ from agent.client.typedefs import (
         ChatMessage, OpenAIResponse,
         Message, TextMessage
 )
+from agent.toolgen import ToolDefinition
 import requests
 
 
@@ -43,6 +44,49 @@ class Client:
                 ),
                 5
         )
+
+    def call_api_with_tools(
+            self,
+            messages: list[ChatMessage],
+            tools: list[ToolDefinition] | None = None,
+            tool_choice: Literal['auto', 'none', 'required'] | None = None,
+            ) -> OpenAIResponse:
+        payload = {
+            "model": self.config.model,
+            "messages": messages,
+            "temperature": self._temperature,
+        }
+
+        if tools:
+            payload["tools"] = tools
+        if tool_choice:
+            payload["tool_choice"] = tool_choice
+
+        if self.backoff:
+            response = self.call_backoff(payload)
+        else:
+            response = requests.post(
+                self.completion_url(),
+                headers=self.headers,
+                json=payload
+            )
+
+        if response is None:
+            print("Error: no response")
+            raise Exception()
+        print(response.text)
+
+        if not response:
+            print(f"Error: {response.status_code} error:")
+            print(response.text)
+            raise Exception()
+
+        if response.status_code == 200:
+            return msgspec.json.decode(response.text, type=OpenAIResponse)
+        else:
+            print(f"Error: {response.status_code}")
+            print(response.text)
+            raise Exception()
 
     def call_api(self, messages: list[ChatMessage]) -> OpenAIResponse:
         payload = {

@@ -32,5 +32,38 @@ def main():
     chat.run()
 
 
+def test():
+    from agent.context import Context
+    config = load_config("data/config.json")
+    client = Client(config, fibonacci_backoff)
+    chat = Chat(client, CLIProvider())
+    prepare_tools(chat)
+    conv = Context()
+    conv.push('user', 'could you tell me what is in the Makefile?')
+    read_tool = get_tool(read_file)
+    tool = {
+            'type': 'function',
+            'function': {
+                'name': read_tool.name,
+                'description': 'Reads the file on filesystem in a folder agent runs in',
+                'parameters': {
+                    'type': 'object',
+                    'properties': {
+                        'path': {
+                            'type': 'string',
+                            'description': 'path to file'
+                        }
+                    },
+                    'required': ['path']
+                }
+            }
+    }
+    client.call_api_with_tools(
+            conv.get_messages(),
+            [tool]
+    )
+
+
 if __name__ == "__main__":
-    main()
+    # main()
+    test()
