@@ -97,6 +97,17 @@ class ToolDescription(Prompt):
 
         return "\n".join(output)
 
+    def _type_for_call(self, tp: str) -> str:
+        if tp == 'str':
+            return 'string'
+        if tp == 'int':
+            return 'integer'
+        if tp == 'float':
+            return 'number'
+        if tp == 'bool':
+            return 'boolean'
+        return tp
+
     def generate_call(self) -> ToolCall:
         func_doc = inspect.getdoc(self.target_function)
         if (not func_doc):
@@ -111,22 +122,9 @@ class ToolDescription(Prompt):
             for param_name, param in sig.parameters.items():
                 type_str = self._format_type(param.annotation)
                 print(type_str)
-                if type_str == 'str':
-                    properties[param_name] = Property(
-                            type='string'
-                    )
-                elif type_str == 'int':
-                    properties[param_name] = Property(
-                            type='integer'
-                    )
-                elif type_str == 'float':
-                    properties[param_name] = Property(
-                            type='number'
-                    )
-                elif type_str == 'bool':
-                    properties[param_name] = Property(
-                            type='boolean'
-                    )
+                properties[param_name] = Property(
+                        type=self._type_for_call(type_str)
+                )
 
                 if param.default is inspect.Parameter.empty:
                     required.append(param_name)
