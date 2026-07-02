@@ -140,6 +140,10 @@ class ToolDescription(Prompt):
         )
         return ToolCall(function=definition)
 
+    def parse_args(self, data: str):
+        # TODO: construct more performat struct
+        return msgspec.json.decode(data, type=dict[str, Any])
+
 
 @dataclass
 class ToolDefinition:
@@ -153,5 +157,5 @@ def get_tool(func: Callable) -> ToolDefinition:
     return ToolDefinition(
             name=desc.func_name,
             description=desc,
-            function=func,
+            function=func
     )

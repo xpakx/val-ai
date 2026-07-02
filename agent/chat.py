@@ -1,4 +1,5 @@
 from agent.client import Client, ToolCall, Message, TextMessage
+from agent.client.typedefs import OpenAIToolCall
 from agent.toolgen import ToolDefinition
 from agent.ui import UIProvider
 from agent.systemprompt import SystemPromptInformation
@@ -133,3 +134,20 @@ class Chat:
     def add_system_part(self, part: SystemPromptInformation):
         self.system_prompt_parts.append(part)
         self.info_subprompt.add_part(part)
+
+    def call_tool_native(self, call: OpenAIToolCall):
+        tool = self.tools[call.function.name]
+        result = ""
+        if not tool:
+            result = "Error: no such tool"
+        try:
+            args = tool.description.parse_args(call.function.arguments)
+            result = tool.function(**args)
+        except Exception:
+            result = "Error while calling tool"
+        return {
+            "role": "tool",
+            "tool_call_id": call.id,
+            "name": call.function.name,
+            "content": result
+        }

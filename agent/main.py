@@ -52,12 +52,9 @@ def test():
         'role': 'assistant',
         'tool_calls': msgspec.to_builtins(msg.tool_calls),
     })
-    msgs.append({
-        "role": "tool",
-        "tool_call_id": msg.tool_calls[0].id,
-        "name": msg.tool_calls[0].function.name,
-        "content": read_file("Makefile")
-    })
+    for call in msg.tool_calls:
+        res = chat.call_tool_native(call)
+        msgs.append(res)
 
     print(msgs)
 
