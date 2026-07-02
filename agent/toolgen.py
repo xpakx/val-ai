@@ -4,11 +4,13 @@ from dataclasses import dataclass
 from agent.prompt.prompt import Prompt
 import msgspec
 
-
-class Property(msgspec.Struct, omit_defaults=True):
-    type: Literal[
+PropertyType = Literal[
             "string", "number", "integer",
             "boolean", "array", "object", "null"]
+
+
+class Property(msgspec.Struct, omit_defaults=True):
+    type: PropertyType
     description: str | None = None
     enum: list[str | int | float] | None = None
     # for array
@@ -19,11 +21,14 @@ class Property(msgspec.Struct, omit_defaults=True):
     additionalProperties: bool | None = None
 
 
+UnsetType = Literal[msgspec.UnsetType.UNSET]
+
+
 class Parameters(msgspec.Struct):
     type: Literal["object"] = "object"
-    properties: dict[str, Property] = msgspec.UNSET
-    required: list[str] = msgspec.UNSET
-    additionalProperties: bool = msgspec.UNSET
+    properties: dict[str, Property] | UnsetType = msgspec.UNSET
+    required: list[str] | UnsetType = msgspec.UNSET
+    additionalProperties: bool | UnsetType = msgspec.UNSET
 
 
 class FunctionDefinition(msgspec.Struct, omit_defaults=True):
@@ -97,7 +102,7 @@ class ToolDescription(Prompt):
 
         return "\n".join(output)
 
-    def _type_for_call(self, tp: str) -> str:
+    def _type_for_call(self, tp: str) -> PropertyType:
         if tp == 'str':
             return 'string'
         if tp == 'int':
@@ -106,7 +111,7 @@ class ToolDescription(Prompt):
             return 'number'
         if tp == 'bool':
             return 'boolean'
-        return tp
+        return 'null'
 
     def generate_call(self) -> ToolCall:
         func_doc = inspect.getdoc(self.target_function)
