@@ -47,13 +47,12 @@ def test():
     )
     msg = resp.choices[0].message
     conv.push('assistant', None, msg.tool_calls)
-    msgs = conv.get_messages()
     for call in msg.tool_calls:
         res = chat.call_tool_native(call)
-        msgs.append(res)
+        conv.push_tool(call.id, call.function.name, str(res))
 
+    msgs = conv.get_messages()
     print(msgs)
-    return
 
     resp = client.call_api_with_tools(
             msgs,

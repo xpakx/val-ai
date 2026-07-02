@@ -1,7 +1,7 @@
 from typing import TypedDict, Literal
 import msgspec
 
-Role = Literal["system", "user", "assistant"]
+Role = Literal["system", "user", "assistant", "tool"]
 
 
 class ChatMessage(TypedDict):

@@ -14,9 +14,15 @@ class ContextMessage:
     hidden: bool = False
     timestamp: datetime = field(default_factory=datetime.now)
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
+
     tool_calls: list[OpenAIToolCall] | None = None
 
+    tool_call_id: int | None = None
+    name: str | None = None
+
     def as_msg(self) -> ChatMessage:
+        if self.author == 'tool':
+            return self.as_tool()
         response = {'role': self.author}
         if isinstance(self.msg, str):
             response['content'] = self.msg
@@ -25,6 +31,20 @@ class ContextMessage:
         if self.tool_calls:
             response['tool_calls'] = msgspec.to_builtins(self.tool_calls)
         return response
+
+    def as_tool(self) -> ChatMessage:
+        resp = {
+            "role": self.author,
+            "tool_call_id": self.tool_call_id,
+            "name": self.name,
+        }
+        if isinstance(self.msg, str):
+            resp['content'] = self.msg
+        elif self.msg:
+            resp['content'] = self.msg.content()
+        else:
+            resp['content'] = ''
+        return resp
 
 
 # TODO: save_context and restore_context
@@ -45,6 +65,17 @@ class Context:
                     author=author,
                     msg=msg,
                     tool_calls=tool_calls,
+        )
+        self.messages.append(new_msg)
+        self.msg_by_id[new_msg.id] = new_msg
+        return new_msg
+
+    def push_tool(self, id: str, name: str, response: str) -> ContextMessage:
+        new_msg = ContextMessage(
+                    author='tool',
+                    name=name,
+                    msg=response,
+                    tool_call_id=id
         )
         self.messages.append(new_msg)
         self.msg_by_id[new_msg.id] = new_msg

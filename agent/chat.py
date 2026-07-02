@@ -145,9 +145,4 @@ class Chat:
             result = tool.function(**args)
         except Exception:
             result = "Error while calling tool"
-        return {
-            "role": "tool",
-            "tool_call_id": call.id,
-            "name": call.function.name,
-            "content": result
-        }
+        return result
