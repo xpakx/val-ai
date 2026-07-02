@@ -34,6 +34,7 @@ def main():
 
 def test():
     from agent.context import Context
+    import msgspec
     config = load_config("data/config.json")
     client = Client(config, fibonacci_backoff)
     chat = Chat(client, CLIProvider())
@@ -43,6 +44,25 @@ def test():
     read_tool = get_tool(read_file)
     resp = client.call_api_with_tools(
             conv.get_messages(),
+            [read_tool.description.generate_call()]
+    )
+    msg = resp.choices[0].message
+    msgs = conv.get_messages()
+    msgs.append({
+        'role': 'assistant',
+        'tool_calls': msgspec.to_builtins(msg.tool_calls),
+    })
+    msgs.append({
+        "role": "tool",
+        "tool_call_id": msg.tool_calls[0].id,
+        "name": msg.tool_calls[0].function.name,
+        "content": read_file("Makefile")
+    })
+
+    print(msgs)
+
+    resp = client.call_api_with_tools(
+            msgs,
             [read_tool.description.generate_call()]
     )
     print(resp)

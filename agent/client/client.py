@@ -9,7 +9,6 @@ from agent.toolgen import ToolDefinition
 import requests
 
 
-# TODO: native tool call if model supports them
 class Client:
     def __init__(self, config: Config, backoff: Callable | None = None):
         self.config = config
