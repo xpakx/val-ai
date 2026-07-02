@@ -1,24 +1,30 @@
 from agent.prompt import PromptPart
 from agent.client import ChatMessage, Role
+from agent.client.typedefs import OpenAIToolCall
 import uuid
 from datetime import datetime
 from dataclasses import dataclass, field
+import msgspec
 
 
 @dataclass
 class ContextMessage:
     author: Role
-    msg: PromptPart | str
+    msg: PromptPart | str | None
     hidden: bool = False
     timestamp: datetime = field(default_factory=datetime.now)
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    tool_calls: list[OpenAIToolCall] | None = None
 
     def as_msg(self) -> ChatMessage:
+        response = {'role': self.author}
         if isinstance(self.msg, str):
-            msg = self.msg
-        else:
-            msg = self.msg.content()
-        return {'role': self.author, 'content': msg}
+            response['content'] = self.msg
+        elif self.msg:
+            response['content'] = self.msg.content()
+        if self.tool_calls:
+            response['tool_calls'] = msgspec.to_builtins(self.tool_calls)
+        return response
 
 
 # TODO: save_context and restore_context
@@ -29,10 +35,16 @@ class Context:
         self.msg_by_id: dict[str, ContextMessage] = {}
         self.reset_point = 0
 
-    def push(self, author: Role, msg: PromptPart | str) -> ContextMessage:
+    def push(
+            self,
+            author: Role,
+            msg: PromptPart | str | None,
+            tool_calls: list[OpenAIToolCall] | None = None
+    ) -> ContextMessage:
         new_msg = ContextMessage(
                     author=author,
                     msg=msg,
+                    tool_calls=tool_calls,
         )
         self.messages.append(new_msg)
         self.msg_by_id[new_msg.id] = new_msg
