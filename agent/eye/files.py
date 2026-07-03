@@ -4,6 +4,7 @@ from watchdog.events import FileSystemEventHandler
 from agent.eye.eye import EyeService
 from pathspec import PathSpec
 from pathlib import Path
+from typing import Sequence, cast
 
 # TODO: patterns and file ignoring
 # TODO: patterns and ignore_patterns should be constructed based
@@ -11,7 +12,7 @@ from pathlib import Path
 
 
 class GitIgnoreHandler(FileSystemEventHandler):
-    def __init__(self, router: "WatchdogFeature",
+    def __init__(self, router: "WatchdogEventRouter",
                  root_path, spec: PathSpec,
                  ignore_directories: bool):
         self.root_path = Path(root_path).resolve()
@@ -158,7 +159,7 @@ class WatchdogFeature(EyeService):
         if gitignore:
             result.extend(gitignore)
         print(result)
-        spec = PathSpec.from_lines('gitwildmatch', result)
+        spec = PathSpec.from_lines('gitwildmatch', cast(Sequence, result))
         return spec
 
     def _use_gitignore(self, path):
@@ -191,6 +192,7 @@ class WatchdogFeature(EyeService):
         self.active_watches[path] = router
 
     def _start_router(self, router: WatchdogEventRouter):
+        assert self.observer is not None
         watch = self.observer.schedule(
                 router.handler,
                 path=str(router.path),
@@ -210,6 +212,7 @@ class WatchdogFeature(EyeService):
                 self._start_router(router)
 
     def remove_route(self, path: str | Path):
+        assert self.observer is not None
         resolved_path = Path(path).resolve()
         if resolved_path in self.active_watches:
             handler = self.active_watches[resolved_path]

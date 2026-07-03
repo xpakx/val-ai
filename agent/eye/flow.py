@@ -1,6 +1,6 @@
 import asyncio
 from agent.eye.eye import Eye, EyeService
-from typing import Callable, Any, Self
+from typing import Callable, Any, Self, cast
 from inspect import iscoroutinefunction
 from dataclasses import dataclass, field
 
@@ -139,7 +139,7 @@ if __name__ == "__main__":
             WaitFor('test')
     ]
     app = Eye()
-    app.add_service(FlowFeature("test", flow))
+    app.add_service(FlowFeature("test", cast(list[FlowStep | tuple[FlowStep, ...]], flow)))
     from .files import WatchdogFeature
     app.add_service(WatchdogFeature())
 
