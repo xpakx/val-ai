@@ -4,8 +4,15 @@ import msgspec
 Role = Literal["system", "user", "assistant", "tool"]
 
 
-class ChatMessage(TypedDict):
+class ChatTextMessage(TypedDict):
     role: Role
+    content: str
+
+
+class ToolResponse(TypedDict):
+    role: Role
+    tool_call_id: str
+    name: str
     content: str
 
 
@@ -52,3 +59,11 @@ class OpenAIChoice(msgspec.Struct):
 
 class OpenAIResponse(msgspec.Struct):
     choices: list[OpenAIChoice]
+
+
+class ToolCallMessage(TypedDict):
+    role: Role
+    tool_calls: list[OpenAIToolCall]
+
+
+ChatMessage = ChatTextMessage | ToolResponse | ToolCallMessage

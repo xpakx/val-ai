@@ -1,5 +1,6 @@
 from agent.prompt import PromptPart
 from agent.client import ChatMessage, Role
+from agent.client.typedefs import ToolResponse,  ToolCallMessage
 from agent.client.typedefs import OpenAIToolCall
 import uuid
 from datetime import datetime
@@ -17,34 +18,41 @@ class ContextMessage:
 
     tool_calls: list[OpenAIToolCall] | None = None
 
-    tool_call_id: int | None = None
+    tool_call_id: str | None = None
     name: str | None = None
 
     def as_msg(self) -> ChatMessage:
         if self.author == 'tool':
             return self.as_tool()
-        response = {'role': self.author}
-        if self.msg and isinstance(self.msg, str):
-            response['content'] = self.msg
-        elif self.msg:
-            response['content'] = self.msg.content()
         if self.tool_calls:
-            response['tool_calls'] = msgspec.to_builtins(self.tool_calls)
-        return response
-
-    def as_tool(self) -> ChatMessage:
-        resp = {
-            "role": self.author,
-            "tool_call_id": self.tool_call_id,
-            "name": self.name,
-        }
+            return self.as_tool_call()
+        msg = ''
         if isinstance(self.msg, str):
-            resp['content'] = self.msg
+            msg = self.msg
         elif self.msg:
-            resp['content'] = self.msg.content()
-        else:
-            resp['content'] = ''
-        return resp
+            msg = self.msg.content()
+
+        return {'role': self.author, 'content': msg}
+
+    def as_tool(self) -> ToolResponse:
+        msg = ''
+        if isinstance(self.msg, str):
+            msg = self.msg
+        elif self.msg:
+            msg = self.msg.content()
+        return {
+            "role": self.author,
+            "tool_call_id": self.tool_call_id or '',
+            "name": self.name or '',
+            "content": msg,
+        }
+
+    def as_tool_call(self) -> ToolCallMessage:
+        tool_calls = msgspec.to_builtins(self.tool_calls)
+        return {
+            "role": self.author,
+            "tool_calls": tool_calls,
+        }
 
 
 # TODO: save_context and restore_context

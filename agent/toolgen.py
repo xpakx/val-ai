@@ -21,7 +21,7 @@ class Property(msgspec.Struct, omit_defaults=True):
     additionalProperties: bool | None = None
 
 
-UnsetType = Literal[msgspec.UnsetType.UNSET]
+UnsetType = Literal[msgspec.UnsetType]
 
 
 class Parameters(msgspec.Struct):
