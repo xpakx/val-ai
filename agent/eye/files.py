@@ -187,7 +187,7 @@ class WatchdogFeature(EyeService):
         router.set_handler(handler)
 
         if self.loop:
-            self._start_router()
+            self._start_router(router)
         self.active_watches[path] = router
 
     def _start_router(self, router: WatchdogEventRouter):
