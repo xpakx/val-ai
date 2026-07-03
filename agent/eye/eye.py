@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 
 class EyeService(Protocol):
+    name: str
     async def run(self, app: "Eye") -> None: ...
 
     @property
@@ -19,7 +20,7 @@ class SimpleEyeService(EyeService):
         self.name = name
         self.func = func
 
-    def run(self, app: "Eye") -> None:
+    async def run(self, app: "Eye") -> None:
         return self.func(app)
 
 
@@ -69,19 +70,21 @@ class Eye:
         if not name:
             name = self._generate_random_id()
             # TODO: collisions
-        if not hasattr(service_func, 'run'):
-            service_func = SimpleEyeService(service_func, name)
-            print(service_func)
-        self._services[name] = service_func
-        if service_func.has_logic():
-            injectable = service_func.get_injectable()
+        if isinstance(service_func, Callable):
+            service = SimpleEyeService(service_func, name)
+            print(service)
+        else:
+            service = service_func
+        self._services[name] = service
+        if service.has_logic():
+            injectable = service.get_injectable()
             if isinstance(injectable, dict):
                 collisions = self._injectables.keys() & injectable.keys()
                 if collisions:
                     print(f"Warning: Overwriting keys: {collisions}")
                 self._injectables.update(injectable)
             else:
-                self._injectables[service_func.name] = injectable
+                self._injectables[service.name] = injectable
         return name
 
     def get_service(self, name: str) -> EyeService | None:
