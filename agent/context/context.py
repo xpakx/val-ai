@@ -9,50 +9,63 @@ import msgspec
 
 
 @dataclass
-class ContextMessage:
+class ContextTextMessage:
     author: Role
+    msg: PromptPart | str
+    hidden: bool = False
+    timestamp: datetime = field(default_factory=datetime.now)
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+
+    def as_msg(self) -> ChatMessage:
+        if isinstance(self.msg, str):
+            msg = self.msg
+        else:
+            msg = self.msg.content()
+        return {'role': self.author, 'content': msg}
+
+
+@dataclass
+class ContextToolMessage:
+    author: Role
+    msg: PromptPart | str | None
+    tool_call_id: str
+    name: str
+    hidden: bool = False
+    timestamp: datetime = field(default_factory=datetime.now)
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+
+    def as_msg(self) -> ToolResponse:
+        msg = ''
+        if isinstance(self.msg, str):
+            msg = self.msg
+        elif self.msg:
+            msg = self.msg.content()
+        return {
+            "role": self.author,
+            "tool_call_id": self.tool_call_id,
+            "name": self.name,
+            "content": msg,
+        }
+
+
+@dataclass
+class ContextToolCallMessage:
+    author: Role
+    tool_calls: list[OpenAIToolCall]
     msg: PromptPart | str | None
     hidden: bool = False
     timestamp: datetime = field(default_factory=datetime.now)
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
 
-    tool_calls: list[OpenAIToolCall] | None = None
-
-    tool_call_id: str | None = None
-    name: str | None = None
-
-    def as_msg(self) -> ChatMessage:
-        if self.author == 'tool':
-            return self.as_tool()
-        if self.tool_calls:
-            return self.as_tool_call()
-        msg = ''
-        if isinstance(self.msg, str):
-            msg = self.msg
-        elif self.msg:
-            msg = self.msg.content()
-
-        return {'role': self.author, 'content': msg}
-
-    def as_tool(self) -> ToolResponse:
-        msg = ''
-        if isinstance(self.msg, str):
-            msg = self.msg
-        elif self.msg:
-            msg = self.msg.content()
-        return {
-            "role": self.author,
-            "tool_call_id": self.tool_call_id or '',
-            "name": self.name or '',
-            "content": msg,
-        }
-
-    def as_tool_call(self) -> ToolCallMessage:
+    def as_msg(self) -> ToolCallMessage:
         tool_calls = msgspec.to_builtins(self.tool_calls)
         return {
             "role": self.author,
             "tool_calls": tool_calls,
         }
+
+
+ContextMessage = ContextTextMessage | ContextToolMessage | ContextToolCallMessage
 
 
 # TODO: save_context and restore_context
@@ -66,10 +79,23 @@ class Context:
     def push(
             self,
             author: Role,
-            msg: PromptPart | str | None,
-            tool_calls: list[OpenAIToolCall] | None = None
+            msg: PromptPart | str
     ) -> ContextMessage:
-        new_msg = ContextMessage(
+        new_msg = ContextTextMessage(
+                    author=author,
+                    msg=msg,
+        )
+        self.messages.append(new_msg)
+        self.msg_by_id[new_msg.id] = new_msg
+        return new_msg
+
+    def push_tool_calls(
+            self,
+            author: Role,
+            tool_calls: list[OpenAIToolCall],
+            msg: PromptPart | str | None = None,
+    ) -> ContextMessage:
+        new_msg = ContextToolCallMessage(
                     author=author,
                     msg=msg,
                     tool_calls=tool_calls,
@@ -79,7 +105,7 @@ class Context:
         return new_msg
 
     def push_tool(self, id: str, name: str, response: str) -> ContextMessage:
-        new_msg = ContextMessage(
+        new_msg = ContextToolMessage(
                     author='tool',
                     name=name,
                     msg=response,

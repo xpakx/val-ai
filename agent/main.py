@@ -46,7 +46,9 @@ def test():
             [read_tool.description.generate_call()]
     )
     msg = resp.choices[0].message
-    conv.push('assistant', None, msg.tool_calls)
+    if not msg.tool_calls:
+        return
+    conv.push_tool_calls('assistant', msg.tool_calls)
     if not msg.tool_calls:
         return
     for call in msg.tool_calls:
