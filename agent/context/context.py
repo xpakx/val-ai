@@ -24,7 +24,7 @@ class ContextMessage:
         if self.author == 'tool':
             return self.as_tool()
         response = {'role': self.author}
-        if isinstance(self.msg, str):
+        if self.msg and isinstance(self.msg, str):
             response['content'] = self.msg
         elif self.msg:
             response['content'] = self.msg.content()

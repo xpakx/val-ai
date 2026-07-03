@@ -47,6 +47,8 @@ def test():
     )
     msg = resp.choices[0].message
     conv.push('assistant', None, msg.tool_calls)
+    if not msg.tool_calls:
+        return
     for call in msg.tool_calls:
         res = chat.call_tool_native(call)
         conv.push_tool(call.id, call.function.name, str(res))

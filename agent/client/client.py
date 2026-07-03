@@ -5,7 +5,7 @@ from agent.client.typedefs import (
         ChatMessage, OpenAIResponse,
         Message, TextMessage
 )
-from agent.toolgen import ToolDefinition
+from agent.toolgen import ToolDefinition, ToolCall
 import requests
 
 
@@ -47,7 +47,7 @@ class Client:
     def call_api_with_tools(
             self,
             messages: list[ChatMessage],
-            tools: list[ToolDefinition] | None = None,
+            tools: list[ToolCall] | None = None,
             tool_choice: Literal['auto', 'none', 'required'] | None = None,
             ) -> OpenAIResponse:
         payload = {
@@ -124,6 +124,8 @@ class Client:
         response = self.call_api(messages)
         print(response)
         content = response.choices[0].message.content
+        if not content:
+            return []
         return self._decode(content)
 
     def _decode(self, text: str) -> list[Message]:
