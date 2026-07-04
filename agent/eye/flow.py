@@ -76,7 +76,7 @@ class FlowFeature(EyeService):
 
     async def on_deployment(self, event):
         loop = self.get_loop()
-        await self.run_once(app, loop)
+        asyncio.create_task(self.run_once(app, loop))
 
     async def run(self, app: Eye) -> None:
         if self.deployable:
