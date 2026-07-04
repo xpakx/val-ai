@@ -3,7 +3,7 @@ from typing import Literal, Callable, Any
 from agent.config import Config
 from agent.client.typedefs import (
         ChatMessage, OpenAIResponse,
-        Message, TextMessage
+        Message, TextMessage, OpenAIToolCall
 )
 from agent.toolgen import ToolDefinition, ToolCall
 import requests
@@ -178,3 +178,16 @@ class Client:
                 if self._is_valid_json(potential_text):
                     return potential_text
         return None
+
+    def ask_with_tools(
+        self,
+        messages: list[ChatMessage],
+        tools: list[ToolCall] | None = None,
+        tool_choice: Literal['auto', 'none', 'required'] | None = None,
+    ) -> tuple[list[Message], list[OpenAIToolCall]]:
+        response = self.call_api_with_tools(messages, tools, tool_choice)
+        content = response.choices[0].message.content
+        tool_calls = response.choices[0].message.tool_calls or []
+        if not content:
+            return [], tool_calls
+        return self._decode(content), tool_calls

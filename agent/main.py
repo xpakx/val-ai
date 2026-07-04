@@ -41,28 +41,28 @@ def test():
     conv = Context()
     conv.push('user', 'could you tell me what is in the Makefile?')
     read_tool = get_tool(read_file)
-    resp = client.call_api_with_tools(
+    resp = client.ask_with_tools(
             conv.get_messages(),
             [read_tool.description.generate_call()]
     )
-    msg = resp.choices[0].message
-    if not msg.tool_calls:
+    tool_calls = resp[1]
+    if not tool_calls:
         return
-    conv.push_tool_calls('assistant', msg.tool_calls)
-    if not msg.tool_calls:
+    conv.push_tool_calls('assistant', tool_calls)
+    if not tool_calls:
         return
-    for call in msg.tool_calls:
+    for call in tool_calls:
         res = chat.call_tool_native(call)
         conv.push_tool(call.id, call.function.name, str(res))
 
     msgs = conv.get_messages()
     print(msgs)
 
-    resp = client.call_api_with_tools(
+    msg, _ = client.ask_with_tools(
             msgs,
             [read_tool.description.generate_call()]
     )
-    print(resp)
+    print(msg[0].text)
 
 
 if __name__ == "__main__":
