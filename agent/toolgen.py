@@ -21,14 +21,11 @@ class Property(msgspec.Struct, omit_defaults=True):
     additionalProperties: bool | None = None
 
 
-UnsetType = Literal[msgspec.UnsetType]
-
-
 class Parameters(msgspec.Struct):
     type: Literal["object"] = "object"
-    properties: dict[str, Property] | UnsetType = msgspec.UNSET
-    required: list[str] | UnsetType = msgspec.UNSET
-    additionalProperties: bool | UnsetType = msgspec.UNSET
+    properties: dict[str, Property] | msgspec.UnsetType = msgspec.UNSET
+    required: list[str] | msgspec.UnsetType = msgspec.UNSET
+    additionalProperties: bool | msgspec.UnsetType = msgspec.UNSET
 
 
 class FunctionDefinition(msgspec.Struct, omit_defaults=True):
