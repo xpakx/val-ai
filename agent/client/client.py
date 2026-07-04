@@ -5,7 +5,7 @@ from agent.client.typedefs import (
         ChatMessage, OpenAIResponse,
         Message, TextMessage, OpenAIToolCall
 )
-from agent.toolgen import ToolDefinition, ToolCall
+from agent.toolgen import ToolCall
 import requests
 
 
