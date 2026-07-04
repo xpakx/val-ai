@@ -6,6 +6,7 @@ from agent.tools import read_file, list_files, write_file, glob_files
 from agent.systemparts import current_time
 from agent.systemprompt import get_system_prompt_info
 from agent.client.backoff import fibonacci_backoff
+from agent.client.fibonacci import fibonacci_backoff_async
 from agent.chat import Chat
 
 
@@ -35,7 +36,7 @@ def main():
 def test():
     from agent.context import Context
     config = load_config("data/config.json")
-    client = Client(config, fibonacci_backoff)
+    client = Client(config, fibonacci_backoff_async)
     chat = Chat(client, CLIProvider())
     prepare_tools(chat)
     conv = Context()
