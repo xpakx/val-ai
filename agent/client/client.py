@@ -107,7 +107,7 @@ class Client:
         content = response.choices[0].message.content
         if not content:
             raise ValueError("Couldn't parse")
-        return self._decode(content, T)
+        return self._decode(content, target)
 
     def ask_with_tools(
         self,
