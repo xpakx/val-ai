@@ -101,6 +101,14 @@ class Client:
             return []
         return self._decode(content, list[Message])
 
+    def ask_typed(
+            self, messages: list[ChatMessage], target: type[T]) -> T:
+        response = self.call_api(messages)
+        content = response.choices[0].message.content
+        if not content:
+            raise ValueError("Couldn't parse")
+        return self._decode(content, T)
+
     def ask_with_tools(
         self,
         messages: list[ChatMessage],
