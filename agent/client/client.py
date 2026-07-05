@@ -1,5 +1,6 @@
 import msgspec
-from typing import Literal, Callable, Any
+from typing import Literal, Callable, Any, TypeVar
+from typing import get_origin, get_args, cast
 from agent.config import Config
 from agent.client.typedefs import (
         ChatMessage, OpenAIResponse,
@@ -7,6 +8,9 @@ from agent.client.typedefs import (
 )
 from agent.toolgen import ToolCall
 import requests
+
+
+T = TypeVar("T")
 
 
 class Client:
@@ -18,7 +22,6 @@ class Client:
         }
         self.backoff = backoff
         self._temperature = 0.7
-        self._native_tools_enabled = False
 
     def set_temperature(self, temp: float) -> None:
         self._temperature = max(0.0, min(1.0, temp))
@@ -95,41 +98,49 @@ class Client:
         content = response.choices[0].message.content
         if not content:
             return []
-        return self._decode(content)
+        return self._decode(content, list[Message])
 
     def ask_with_tools(
         self,
         messages: list[ChatMessage],
         tools: list[ToolCall] | None = None,
         tool_choice: Literal['auto', 'none', 'required'] | None = None,
-    ) -> tuple[list[Message], list[OpenAIToolCall]]:
+    ) -> tuple[list[TextMessage], list[OpenAIToolCall]]:
         response = self.call_api(messages, tools, tool_choice)
         content = response.choices[0].message.content
         tool_calls = response.choices[0].message.tool_calls or []
         if not content:
             return [], tool_calls
-        return self._decode(content), tool_calls
+        return self._decode(content, list[TextMessage]), tool_calls
 
-    def _decode(self, text: str) -> list[Message]:
+    def _decode(
+            self, text: str, target_type: type[T]) -> T:
         print(text)
         try:
-            return msgspec.json.decode(text, type=list[Message])
+            return msgspec.json.decode(text, type=target_type)
         except Exception:
-            new_text = self._rescue_imperfect_json(text)
+            new_text = self._rescue_imperfect_json(text, target_type)
             print(new_text)
             return new_text
 
-    def _rescue_imperfect_json(self, text: str) -> list[Message]:
+    def _rescue_imperfect_json(
+            self, text: str, target_type: type[T]) -> T:
         # TODO: we should probably found all potential
         # candidates and check whether they are proper
         # json
         new_text = self._find_json(text)
         if new_text:
-            return msgspec.json.decode(new_text, type=list[Message])
-        new_text = self._find_json(text, start_symbol='{')
-        if new_text:
-            return [msgspec.json.decode(new_text, type=Message)]
-        return [TextMessage(text)]
+            return msgspec.json.decode(new_text, type=target_type)
+
+        origin = get_origin(target_type)
+        inner_type = get_args(target_type)[0]
+        if origin is list:
+            new_text = self._find_json(text, start_symbol='{')
+            if new_text:
+                return cast(T, [msgspec.json.decode(new_text, type=inner_type)])
+        if origin is list:
+            return cast(T, [inner_type(text)])
+        raise ValueError(f"Could not rescue JSON into requested type: {target_type}")
 
     def _is_valid_json(self, text: str) -> bool:
         try:
