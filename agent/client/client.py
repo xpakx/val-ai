@@ -18,6 +18,7 @@ class Client:
         }
         self.backoff = backoff
         self._temperature = 0.7
+        self._native_tools_enabled = False
 
     def set_temperature(self, temp: float) -> None:
         self._temperature = max(0.0, min(1.0, temp))
@@ -44,7 +45,7 @@ class Client:
                 5
         )
 
-    def call_api_with_tools(
+    def call_api(
             self,
             messages: list[ChatMessage],
             tools: list[ToolCall] | None = None,
@@ -88,38 +89,6 @@ class Client:
             print(response.text)
             raise Exception()
 
-    def call_api(self, messages: list[ChatMessage]) -> OpenAIResponse:
-        payload = {
-            "model": self.config.model,
-            "messages": messages,
-            "temperature": self._temperature,
-        }
-
-        if self.backoff:
-            response = self.call_backoff(payload)
-        else:
-            response = requests.post(
-                self.completion_url(),
-                headers=self.headers,
-                json=payload
-            )
-
-        if response is None:
-            print("Error: no response")
-            raise Exception()
-
-        if not response:
-            print(f"Error: {response.status_code} error:")
-            print(response.text)
-            raise Exception()
-
-        if response.status_code == 200:
-            return msgspec.json.decode(response.text, type=OpenAIResponse)
-        else:
-            print(f"Error: {response.status_code}")
-            print(response.text)
-            raise Exception()
-
     def ask(self, messages: list[ChatMessage]) -> list[Message]:
         response = self.call_api(messages)
         print(response)
@@ -127,6 +96,19 @@ class Client:
         if not content:
             return []
         return self._decode(content)
+
+    def ask_with_tools(
+        self,
+        messages: list[ChatMessage],
+        tools: list[ToolCall] | None = None,
+        tool_choice: Literal['auto', 'none', 'required'] | None = None,
+    ) -> tuple[list[Message], list[OpenAIToolCall]]:
+        response = self.call_api(messages, tools, tool_choice)
+        content = response.choices[0].message.content
+        tool_calls = response.choices[0].message.tool_calls or []
+        if not content:
+            return [], tool_calls
+        return self._decode(content), tool_calls
 
     def _decode(self, text: str) -> list[Message]:
         print(text)
@@ -178,16 +160,3 @@ class Client:
                 if self._is_valid_json(potential_text):
                     return potential_text
         return None
-
-    def ask_with_tools(
-        self,
-        messages: list[ChatMessage],
-        tools: list[ToolCall] | None = None,
-        tool_choice: Literal['auto', 'none', 'required'] | None = None,
-    ) -> tuple[list[Message], list[OpenAIToolCall]]:
-        response = self.call_api_with_tools(messages, tools, tool_choice)
-        content = response.choices[0].message.content
-        tool_calls = response.choices[0].message.tool_calls or []
-        if not content:
-            return [], tool_calls
-        return self._decode(content), tool_calls
