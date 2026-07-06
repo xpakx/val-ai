@@ -6,7 +6,6 @@ from agent.tools import read_file, list_files, write_file, glob_files
 from agent.systemparts import current_time
 from agent.systemprompt import get_system_prompt_info
 from agent.client.backoff import fibonacci_backoff
-from agent.client.fibonacci import fibonacci_backoff_async
 from agent.chat import Chat
 
 
@@ -21,10 +20,10 @@ def prepare_tools(chat: Chat) -> None:
     chat.add_tool(glob_tool)
 
 
-def main():
+def main(tools):
     config = load_config("data/config.json")
     client = Client(config, fibonacci_backoff)
-    chat = Chat(client, CLIProvider(), tool_support=True)
+    chat = Chat(client, CLIProvider(), tool_support=tools)
     prepare_tools(chat)
 
     time = get_system_prompt_info(current_time)
@@ -35,4 +34,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(True)
