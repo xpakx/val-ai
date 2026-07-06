@@ -1,6 +1,7 @@
 from agent.client import Client, ToolCall, Message, TextMessage
 from agent.client.typedefs import OpenAIToolCall
 from agent.toolgen import ToolDefinition
+from agent.toolgen import ToolCall as ToolCallGen
 from agent.ui import UIProvider
 from agent.systemprompt import SystemPromptInformation
 from agent.prompt import Prompt
@@ -102,6 +103,34 @@ class Chat:
         self.ui.debug(self.conversation.get_messages())
         return True
 
+    def get_tools_data(self) -> list[ToolCallGen]:
+        return [
+                t.description.generate_call() for t in self.tools.values()
+        ]
+
+    def step_tools_native(self):
+        messages, tool_calls = self.client.ask_with_tools(
+                self.conversation.get_messages(),
+                self.get_tools_data()
+        )
+        self.ui.debug(f"MESSAGES: {messages}")
+        self.ui.debug(f"CALLS: {tool_calls}")
+
+        if tool_calls:
+            self.conversation.push_tool_calls('assistant', tool_calls)
+        for msg in messages:
+            self.process_text_msg(msg)
+        for tool_call in tool_calls:
+            self.process_native_tool_call(tool_call)
+
+        self.ui.debug(self.conversation.get_messages())
+        if not tool_calls:
+            self.read_user_input = True
+            return True
+        self.read_user_input = False
+
+        return True
+
     def process_text_msg(self, msg: TextMessage):
         self.conversation.push("assistant", msg.text)
         self.ui.say("Agent", msg.text)
@@ -115,6 +144,11 @@ class Chat:
             f"tool call: {call.name}, {call.args}"
         )
         results.append(toolResult)
+
+    def process_native_tool_call(self, call: OpenAIToolCall):
+        result = self.call_tool_native(call)
+        self.conversation.push_tool(
+                call.id, call.function.name, str(result))
 
     def add_tool(self, tool: ToolDefinition):
         self.tools[tool.name] = tool
