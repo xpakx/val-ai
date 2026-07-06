@@ -24,34 +24,15 @@ def prepare_tools(chat: Chat) -> None:
 def main():
     config = load_config("data/config.json")
     client = Client(config, fibonacci_backoff)
-    chat = Chat(client, CLIProvider())
+    chat = Chat(client, CLIProvider(), tool_support=True)
     prepare_tools(chat)
 
     time = get_system_prompt_info(current_time)
     chat.add_system_part(time)
+    print(chat.prompt.generate())
 
     chat.run()
 
 
-def test():
-    from agent.context import Context
-    config = load_config("data/config.json")
-    client = Client(config, fibonacci_backoff)
-    chat = Chat(client, CLIProvider())
-    prepare_tools(chat)
-
-    conv = chat.conversation
-    conv.push('user', 'could you tell me what is in the Makefile?')
-    chat.step_tools_native()
-    msgs = conv.get_messages()
-    # added aditional call, bc agent would use
-    # `ls` with this toolset
-    chat.step_tools_native()
-    chat.step_tools_native()
-    msgs = conv.get_messages()
-    print(msgs)
-
-
 if __name__ == "__main__":
-    # main()
-    test()
+    main()

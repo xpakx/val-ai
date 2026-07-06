@@ -37,9 +37,10 @@ class Chat:
     def prepare_prompt(self):
         self.prompt = Prompt.from_file("prompts/main.md")
         self.prompt.set_prefix('\n')
-        tool_prompt = Prompt.from_file("prompts/tool_desc.md")
-        tool_prompt.bind_visibility(self.show_tools)
-        self.prompt.add_part(tool_prompt)
+        if not self.tools_support:
+            tool_prompt = Prompt.from_file("prompts/tool_desc.md")
+            tool_prompt.bind_visibility(self.show_tools)
+            self.prompt.add_part(tool_prompt)
 
         self.info_subprompt = Prompt("")
         for part in self.system_prompt_parts:
@@ -82,7 +83,17 @@ class Chat:
             cont = self.read_input()
             if (not cont):
                 return False
+        if self.tools_support:
+            return self.step_tools_native()
+        else:
+            return self.step_tools_in_prompt()
 
+    def get_tools_data(self) -> list[ToolCallGen]:
+        return [
+                t.description.generate_call() for t in self.tools.values()
+        ]
+
+    def step_tools_in_prompt(self):
         ai = self.client.ask(self.conversation.get_messages())
         self.ui.debug(ai)
         toolResults = []
@@ -102,11 +113,6 @@ class Chat:
         )
         self.ui.debug(self.conversation.get_messages())
         return True
-
-    def get_tools_data(self) -> list[ToolCallGen]:
-        return [
-                t.description.generate_call() for t in self.tools.values()
-        ]
 
     def step_tools_native(self):
         messages, tool_calls = self.client.ask_with_tools(
