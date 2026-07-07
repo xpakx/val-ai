@@ -8,6 +8,10 @@ from agent.systemprompt import get_system_prompt_info
 from agent.client.backoff import fibonacci_backoff
 from agent.chat import Chat
 
+import msgspec
+from agent.client.typedefs import  OpenAIResponseFormat, OpenAIResponseSchema
+from agent.toolgen import Parameters, Property
+
 
 def prepare_tools(chat: Chat) -> None:
     read_tool = get_tool(read_file)
@@ -33,31 +37,46 @@ def main(tools):
     chat.run()
 
 
+def format_type(tp: type) -> str:
+    return 'string'  # TODO
+
+
+def prepare_response_format(tp: msgspec.Struct) -> OpenAIResponseFormat:
+    name = tp.__name__.lower()
+    properties = {}
+    for field in msgspec.structs.fields(tp):
+        type_str = format_type(field.type)
+        properties[field.name] = Property(
+                type=type_str
+        )
+    schema = Parameters(
+            required=list(properties.keys()),
+            additionalProperties=False,
+            properties=properties,
+    )
+    json_schema = OpenAIResponseSchema(
+            name=name,
+            schema=schema
+    )
+    return OpenAIResponseFormat(json_schema=json_schema)
+
+
 def test():
     from agent.context import Context
-    from agent.client.typedefs import  OpenAIResponseFormat, OpenAIResponseSchema
-    from agent.toolgen import Parameters, Property
+
+    class Msg(msgspec.Struct):
+        message: str
     config = load_config("data/config.json")
     client = Client(config, fibonacci_backoff)
     context = Context()
     context.push('user', 'hello, how are you?')
-    client.call_api(
+    resp = client.call_api(
             context.get_messages(),
-            response_format=OpenAIResponseFormat(
-                json_schema=OpenAIResponseSchema(
-                    name='greeting',
-                    schema=Parameters(
-                        required=['message'],
-                        additionalProperties=False,
-                        properties={
-                            'message': Property(
-                                type='string'
-                            )
-                        }
-                    )
-                )
-            )
+            response_format=prepare_response_format(Msg),
     )
+    msg = resp.choices[0].message.content
+    result = msgspec.json.decode(msg, type=Msg)
+    print(result)
 
 
 if __name__ == "__main__":
