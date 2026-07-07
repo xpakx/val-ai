@@ -6,7 +6,16 @@ from agent.toolgen import Parameters, Property
 
 
 def format_type(tp: type) -> str:
-    return 'string'  # TODO
+    # TODO
+    if tp is str:
+        return 'string'
+    if tp is int:
+        return 'integer'
+    if tp is float:
+        return 'number'
+    if tp is bool:
+        return 'boolean'
+    return 'null'
 
 
 def prepare_response_format(tp: msgspec.Struct) -> OpenAIResponseFormat:
