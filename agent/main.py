@@ -33,5 +33,33 @@ def main(tools):
     chat.run()
 
 
+def test():
+    from agent.context import Context
+    from agent.client.typedefs import  OpenAIResponseFormat, OpenAIResponseSchema
+    from agent.toolgen import Parameters, Property
+    config = load_config("data/config.json")
+    client = Client(config, fibonacci_backoff)
+    context = Context()
+    context.push('user', 'hello, how are you?')
+    client.call_api(
+            context.get_messages(),
+            response_format=OpenAIResponseFormat(
+                json_schema=OpenAIResponseSchema(
+                    name='greeting',
+                    schema=Parameters(
+                        required=['message'],
+                        additionalProperties=False,
+                        properties={
+                            'message': Property(
+                                type='string'
+                            )
+                        }
+                    )
+                )
+            )
+    )
+
+
 if __name__ == "__main__":
-    main(True)
+    # main(True)
+    test()

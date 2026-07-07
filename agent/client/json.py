@@ -55,4 +55,3 @@ class JsonRescuer:
                 if self._is_valid_json(potential_text):
                     return potential_text
         return None
-    pass

@@ -3,7 +3,8 @@ from typing import Literal, Callable, Any, TypeVar
 from agent.config import Config
 from agent.client.typedefs import (
         ChatMessage, OpenAIResponse,
-        Message, TextMessage, OpenAIToolCall
+        Message, TextMessage, OpenAIToolCall,
+        OpenAIResponseFormat,
 )
 from agent.toolgen import ToolCall
 import requests
@@ -54,6 +55,7 @@ class Client:
             messages: list[ChatMessage],
             tools: list[ToolCall] | None = None,
             tool_choice: Literal['auto', 'none', 'required'] | None = None,
+            response_format: OpenAIResponseFormat | None = None,
             ) -> OpenAIResponse:
         payload = {
             "model": self.config.model,
@@ -65,6 +67,9 @@ class Client:
             payload["tools"] = msgspec.to_builtins(tools)
         if tool_choice:
             payload["tool_choice"] = tool_choice
+        if response_format:
+            payload["response_format"] = msgspec.to_builtins(
+                    response_format)
 
         if self.backoff:
             response = self.call_backoff(payload)

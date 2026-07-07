@@ -1,5 +1,6 @@
 from typing import TypedDict, Literal
 import msgspec
+from agent.toolgen import Parameters
 
 Role = Literal["system", "user", "assistant", "tool"]
 
@@ -64,6 +65,17 @@ class OpenAIResponse(msgspec.Struct):
 class ToolCallMessage(TypedDict):
     role: Role
     tool_calls: list[OpenAIToolCall]
+
+
+class OpenAIResponseSchema(msgspec.Struct):
+    name: str
+    schema: Parameters
+    strict: bool = True
+
+
+class OpenAIResponseFormat(msgspec.Struct):
+    json_schema: OpenAIResponseSchema
+    type: Literal["json_schema"] = "json_schema"
 
 
 ChatMessage = ChatTextMessage | ToolResponse | ToolCallMessage
