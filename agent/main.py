@@ -8,10 +8,6 @@ from agent.systemprompt import get_system_prompt_info
 from agent.client.backoff import fibonacci_backoff
 from agent.chat import Chat
 
-import msgspec
-from agent.client.typedefs import  OpenAIResponseFormat, OpenAIResponseSchema
-from agent.toolgen import Parameters, Property
-
 
 def prepare_tools(chat: Chat) -> None:
     read_tool = get_tool(read_file)
@@ -37,32 +33,10 @@ def main(tools):
     chat.run()
 
 
-def format_type(tp: type) -> str:
-    return 'string'  # TODO
-
-
-def prepare_response_format(tp: msgspec.Struct) -> OpenAIResponseFormat:
-    name = tp.__name__.lower()
-    properties = {}
-    for field in msgspec.structs.fields(tp):
-        type_str = format_type(field.type)
-        properties[field.name] = Property(
-                type=type_str
-        )
-    schema = Parameters(
-            required=list(properties.keys()),
-            additionalProperties=False,
-            properties=properties,
-    )
-    json_schema = OpenAIResponseSchema(
-            name=name,
-            schema=schema
-    )
-    return OpenAIResponseFormat(json_schema=json_schema)
-
-
 def test():
     from agent.context import Context
+    import msgspec
+    from agent.client.format import prepare_response_format
 
     class Msg(msgspec.Struct):
         message: str
