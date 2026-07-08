@@ -144,8 +144,9 @@ class ToolDescription(Prompt):
         return ToolCall(function=definition)
 
     def parse_args(self, data: str):
-        # TODO: construct more performat struct
-        return msgspec.json.decode(data, type=dict[str, Any])
+        return msgspec.to_builtins(
+            msgspec.json.decode(data, type=self._args_struct)
+        )
 
     def prepare_args(self) -> msgspec.Struct:
         sig = inspect.signature(self.target_function)
