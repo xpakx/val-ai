@@ -1,5 +1,5 @@
 import inspect
-from typing import Callable, Any, Literal
+from typing import Callable, Any, Literal, cast
 from dataclasses import dataclass
 from agent.prompt.prompt import Prompt
 import msgspec
@@ -48,6 +48,7 @@ class ToolDescription(Prompt):
         self.dirty = True
         self.parent = None
         self._show = True
+        self._args_struct = self.prepare_args()
 
     def _format_type(self, annotation) -> str:
         if annotation is inspect.Parameter.empty:
@@ -145,6 +146,21 @@ class ToolDescription(Prompt):
     def parse_args(self, data: str):
         # TODO: construct more performat struct
         return msgspec.json.decode(data, type=dict[str, Any])
+
+    def prepare_args(self) -> msgspec.Struct:
+        sig = inspect.signature(self.target_function)
+        fields = {}
+        if sig.parameters:
+            for param_name, param in sig.parameters.items():
+                fields[param_name] = param.annotation
+        return cast(
+                msgspec.Struct,
+                msgspec.defstruct(
+                    self.func_name,
+                    fields,
+                    frozen=True
+                )
+        )
 
 
 @dataclass
