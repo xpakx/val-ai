@@ -49,6 +49,8 @@ def test():
             response_format=prepare_response_format(Msg),
     )
     msg = resp.choices[0].message.content
+    if not msg:
+        return
     result = msgspec.json.decode(msg, type=Msg)
     print(result)
 

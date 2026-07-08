@@ -3,9 +3,12 @@ from agent.client.typedefs import (
         OpenAIResponseFormat, OpenAIResponseSchema
 )
 from agent.toolgen import Parameters, Property
+from typing import Literal
 
 
-def format_type(tp: type) -> str:
+def format_type(
+        tp: type
+) -> Literal['string', 'integer', 'number', 'boolean', 'null']:
     # TODO
     if tp is str:
         return 'string'
@@ -18,7 +21,7 @@ def format_type(tp: type) -> str:
     return 'null'
 
 
-def prepare_response_format(tp: msgspec.Struct) -> OpenAIResponseFormat:
+def prepare_response_format(tp: type[msgspec.Struct]) -> OpenAIResponseFormat:
     name = tp.__name__.lower()
     properties = {}
     for field in msgspec.structs.fields(tp):
