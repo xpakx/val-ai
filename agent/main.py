@@ -36,7 +36,6 @@ def main(tools):
 def test():
     from agent.context import Context
     import msgspec
-    from agent.client.format import prepare_response_format
 
     class Msg(msgspec.Struct):
         message: str
@@ -46,7 +45,7 @@ def test():
     context.push('user', 'hello, how are you?')
     resp = client.call_api(
             context.get_messages(),
-            response_format=prepare_response_format(Msg),
+            response_format=Msg,
     )
     msg = resp.choices[0].message.content
     if not msg:
@@ -56,5 +55,5 @@ def test():
 
 
 if __name__ == "__main__":
-    main(True)
-    # test()
+    # main(True)
+    test()

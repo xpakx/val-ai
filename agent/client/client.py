@@ -9,6 +9,7 @@ from agent.client.typedefs import (
 from agent.toolgen import ToolCall
 import requests
 from agent.client.json import JsonRescuer
+from agent.client.format import prepare_response_format
 
 
 T = TypeVar("T")
@@ -55,7 +56,7 @@ class Client:
             messages: list[ChatMessage],
             tools: list[ToolCall] | None = None,
             tool_choice: Literal['auto', 'none', 'required'] | None = None,
-            response_format: OpenAIResponseFormat | None = None,
+            response_format: OpenAIResponseFormat | type[msgspec.Struct] | None = None,
             ) -> OpenAIResponse:
         payload = {
             "model": self.config.model,
@@ -68,8 +69,13 @@ class Client:
         if tool_choice:
             payload["tool_choice"] = tool_choice
         if response_format:
-            payload["response_format"] = msgspec.to_builtins(
-                    response_format)
+            if isinstance(response_format, OpenAIResponseFormat):
+                payload["response_format"] = msgspec.to_builtins(
+                        response_format)
+            else:
+                payload["response_format"] = msgspec.to_builtins(
+                    prepare_response_format(response_format)
+                )
 
         if self.backoff:
             response = self.call_backoff(payload)
