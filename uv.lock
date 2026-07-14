@@ -119,6 +119,29 @@ wheels = [
 ]
 
 [[package]]
+name = "pygixml"
+version = "0.12.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/af/58/04c8d83fb0d618fa4d96da629fd9b2e84395c97528f368a421cc7387f7b9/pygixml-0.12.0.tar.gz", hash = "sha256:f6eb0c3034784514cc954442012c24cb773329e05c55553999cd15998e7d3658", size = 760302, upload-time = "2026-06-20T21:05:34.038Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/38/3c/f08c2d8a507cf539e7fc986cbf63649c8e6ba9f702b762f13a35da97364e/pygixml-0.12.0-cp313-cp313-macosx_10_13_universal2.whl", hash = "sha256:929f0d29f89ce24ae29406ae5a82bcee65bc849a8337dd023578aa09371a5324", size = 629664, upload-time = "2026-06-20T21:05:05.792Z" },
+    { url = "https://files.pythonhosted.org/packages/1f/94/9c1c9c832b44bf7eb5057232d1589ae33c5ead13ed048fb68768b81c4b39/pygixml-0.12.0-cp313-cp313-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:844ba2eb7f0d17a983b348da15a3fa70d9e645ca6209c50a16da5b522a192b4e", size = 402412, upload-time = "2026-06-20T21:05:07.113Z" },
+    { url = "https://files.pythonhosted.org/packages/fa/9c/a830c5fb2863b0e426b5e0d835f6cf2979990648a6d756a98d913722fd3c/pygixml-0.12.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:62aa9b7e6666f3f20a3873d7baa8f7a907c65ee64a001265ce271f9ea1caada2", size = 1434776, upload-time = "2026-06-20T21:05:08.153Z" },
+    { url = "https://files.pythonhosted.org/packages/c2/c9/9b49cea0027a605acea7b2563103e4ffc9c21d90d02b20c5b34101e0cdd9/pygixml-0.12.0-cp313-cp313-win32.whl", hash = "sha256:8c81d7172afc94a6d43b9f72175a9da46dc13363352ff0a12cc71620259d4a75", size = 277718, upload-time = "2026-06-20T21:05:09.433Z" },
+    { url = "https://files.pythonhosted.org/packages/67/cc/3220233c6f10becbeaa19ebfe4bebe9031aa40d1784cf26efeb47317b77a/pygixml-0.12.0-cp313-cp313-win_amd64.whl", hash = "sha256:2095887ba290adfa98fcbc511a54d583745efb5ffafd00395357d416b7984016", size = 318944, upload-time = "2026-06-20T21:05:10.677Z" },
+    { url = "https://files.pythonhosted.org/packages/2c/a9/45816654a7316e51978fb272700650d53fdfd3bace238c57d930319f0803/pygixml-0.12.0-cp314-cp314-macosx_10_15_universal2.whl", hash = "sha256:31024316e515f86ad20757f92e76c2c9403a47cc6e932ca4f2df0d2f9647827b", size = 633751, upload-time = "2026-06-20T21:05:11.67Z" },
+    { url = "https://files.pythonhosted.org/packages/b0/1e/9e73a21c53e01243c6ea97d2d65ae33ddb03a67a0c00bde09f7d1c7d405c/pygixml-0.12.0-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:f2431ca99b37eb769a7441c90fb69ddbbd8ca814127e0d2b733183e636ac55fa", size = 406150, upload-time = "2026-06-20T21:05:13.274Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/1a/478462f4c2d3aa9d4f328b6a7777df09418100756bc4b8a3ecbf46201c1a/pygixml-0.12.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:58227a8f3ac264e6fc2e10d759159131ef62aead776e197bf8430628349d2ea6", size = 1438233, upload-time = "2026-06-20T21:05:14.763Z" },
+    { url = "https://files.pythonhosted.org/packages/22/47/ec821ad6786cc76bc455b2d645575d0864992cce24e2d6d125623a0cb76d/pygixml-0.12.0-cp314-cp314-win32.whl", hash = "sha256:cc3f0e4d2d4190f6e21c1d4acd435168e363644b210e86916edf2d01247b3faf", size = 283660, upload-time = "2026-06-20T21:05:15.835Z" },
+    { url = "https://files.pythonhosted.org/packages/25/c5/edd2b1d19d368e509d9398ed1f5c4a733780a15dd13d1e3fab873808f064/pygixml-0.12.0-cp314-cp314-win_amd64.whl", hash = "sha256:3ddde11880cd225f40a5c6296fb88639d9092560e782378da78a1dd2e5c736f7", size = 327160, upload-time = "2026-06-20T21:05:16.745Z" },
+    { url = "https://files.pythonhosted.org/packages/39/62/87249a3073496a7ab37e63d122d7491300d11126769a85bed7139b262e11/pygixml-0.12.0-cp314-cp314t-macosx_10_15_universal2.whl", hash = "sha256:44eda46e8f51ba71b8668dd0bc274966556ec6e867b9b5415e28f7f44c75ffba", size = 662150, upload-time = "2026-06-20T21:05:17.664Z" },
+    { url = "https://files.pythonhosted.org/packages/78/51/9e3ae1b67fbb3894250f52fd03b98aed47ec93b9a99f16ea68c80ec8c694/pygixml-0.12.0-cp314-cp314t-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:65682c2488800274c95cd6422432ebc7ef94e732962002a659b0d8e89c26adda", size = 397180, upload-time = "2026-06-20T21:05:18.905Z" },
+    { url = "https://files.pythonhosted.org/packages/8b/36/09e6db0261caf71073a70fc074fd2045767c1f20055c62010fe9f1c109c8/pygixml-0.12.0-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:46616b63de8fd4c72f021ee14adaf2157cef657d89a6ad3037cd880aec294213", size = 1428487, upload-time = "2026-06-20T21:05:20.034Z" },
+    { url = "https://files.pythonhosted.org/packages/db/d2/234258800c7a6b87370490b81014fa6c043ccff8e04b4be72e0e8a37323f/pygixml-0.12.0-cp314-cp314t-win32.whl", hash = "sha256:2e184c4ef2331ee7d25e9cd37af81f35557b203feb71348a30a259101554cdc4", size = 297045, upload-time = "2026-06-20T21:05:21.288Z" },
+    { url = "https://files.pythonhosted.org/packages/5e/bb/a21f32f6b9de9726e17ab6cbb488ca6d1ca656d86884dc407878769ace1f/pygixml-0.12.0-cp314-cp314t-win_amd64.whl", hash = "sha256:faaad67882a3333a4bef7e85cf44c3733d5eb4d830ab3de86440f58d5b07cbb9", size = 343428, upload-time = "2026-06-20T21:05:22.217Z" },
+]
+
+[[package]]
 name = "pyrefly"
 version = "0.60.0"
 source = { registry = "https://pypi.org/simple" }
@@ -213,6 +236,7 @@ source = { editable = "." }
 dependencies = [
     { name = "msgspec" },
     { name = "pathspec" },
+    { name = "pygixml" },
     { name = "requests" },
     { name = "selectolax" },
     { name = "watchdog" },
@@ -228,6 +252,7 @@ dev = [
 requires-dist = [
     { name = "msgspec", specifier = ">=0.20.0" },
     { name = "pathspec", specifier = ">=1.1.1" },
+    { name = "pygixml", specifier = ">=0.12.0" },
     { name = "requests", specifier = ">=2.33.1" },
     { name = "selectolax", specifier = ">=0.4.10" },
     { name = "watchdog", specifier = ">=6.0.0" },
