@@ -1,5 +1,5 @@
 import requests
-from selectolax.parser import HTMLParser
+import pygixml
 import msgspec
 from pathlib import Path
 
@@ -22,36 +22,35 @@ def search_arxiv(query: str) -> list[ArXivData]:
 
     response = requests.get(url, params=data)
     response.raise_for_status()
-    tree = HTMLParser(response.text)
+    tree = pygixml.parse_string(response.text)
 
-    entries = tree.css('entry')
+    entries = tree.root.select_nodes('entry')
     links: list[ArXivData] = []
 
     for entry in entries:
         struct = ArXivData(categories=[], authors=[])
-        # TODO: selectolax seems to be confused by self-closing tags
-        for child in entry.iter():
-            if child.tag == 'id':
+        for child in entry.node.children():
+            if child.name == 'id':
                 struct.id = child.text()
-            elif child.tag == 'title':
+            elif child.name == 'title':
                 struct.title = child.text()
-            elif child.tag == 'summary':
+            elif child.name == 'summary':
                 struct.description = child.text()
-            elif child.tag == 'link':
-                tp = child.attributes.get('title')
-                href = child.attributes.get('href')
+            elif child.name == 'link':
+                tp = child.attribute('title').value
+                href = child.attribute('href').value
                 if tp == 'pdf':
                     struct.pdf_link = href
                 else:
                     struct.html_link = href
-            elif child.tag == 'published':
+            elif child.name == 'published':
                 struct.published = child.text()
-            elif child.tag == 'arxiv:journal_ref':
+            elif child.name == 'arxiv:journal_ref':
                 struct.journal = child.text()
-            elif child.tag == 'author':
-                struct.authors.append(child.first_child.text())
-            elif child.tag == 'category':
-                struct.categories.append(child.attributes.get('term'))
+            elif child.name == 'author':
+                struct.authors.append(child.first_child().text())
+            elif child.name == 'category':
+                struct.categories.append(child.attribute('term').value)
         links.append(struct)
     return links
 
@@ -74,5 +73,9 @@ def arxiv_get_pdf(paper: ArXivData, output: str | Path):
 
 if __name__ == "__main__":
     results = search_arxiv("agents")
+    for r in results:
+        print(r)
+        print()
+    exit(0)
     r = results[0]
     arxiv_get_pdf(r, 'test.pdf')
