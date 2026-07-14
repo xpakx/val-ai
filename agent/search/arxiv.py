@@ -19,7 +19,7 @@ def search_arxiv(query: str) -> list[ArXivData]:
     url = "http://export.arxiv.org/api/query"
     data = {"search_query": f"all:{query}"}
 
-    response = requests.get(url, data)
+    response = requests.get(url, params=data)
     response.raise_for_status()
     tree = HTMLParser(response.text)
 
@@ -28,6 +28,7 @@ def search_arxiv(query: str) -> list[ArXivData]:
 
     for entry in entries:
         struct = ArXivData(categories=[], authors=[])
+        # TODO: selectolax seems to be confused by self-closing tags
         for child in entry.iter():
             if child.tag == 'id':
                 struct.id = child.text()
@@ -47,13 +48,15 @@ def search_arxiv(query: str) -> list[ArXivData]:
             elif child.tag == 'arxiv:journal_ref':
                 struct.journal = child.text()
             elif child.tag == 'author':
-                struct.authors.append(child.text())
+                struct.authors.append(child.first_child.text())
             elif child.tag == 'category':
-                struct.authors.append(child.attributes.get('term'))
+                struct.categories.append(child.attributes.get('term'))
         links.append(struct)
     return links
 
 
 if __name__ == "__main__":
     results = search_arxiv("agents")
-    print(results[0])
+    for result in results:
+        print(result)
+        print()
