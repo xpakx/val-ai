@@ -1,6 +1,7 @@
 import requests
 from selectolax.parser import HTMLParser
 import msgspec
+from pathlib import Path
 
 
 class ArXivData(msgspec.Struct):
@@ -55,8 +56,23 @@ def search_arxiv(query: str) -> list[ArXivData]:
     return links
 
 
+def arxiv_get_pdf(paper: ArXivData, output: str | Path):
+    if not paper.pdf_link:
+        return
+    output = Path(output)
+
+    with (
+            requests.get(paper.pdf_link, stream=True) as response,
+            output.open("wb") as f,
+    ):
+        response.raise_for_status()
+
+        for chunk in response.iter_content(chunk_size=8192):
+            if chunk:
+                f.write(chunk)
+
+
 if __name__ == "__main__":
     results = search_arxiv("agents")
-    for result in results:
-        print(result)
-        print()
+    r = results[0]
+    arxiv_get_pdf(r, 'test.pdf')
