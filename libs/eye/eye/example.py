@@ -1,6 +1,6 @@
-from agent.eye.eye import Eye
-from agent.eye.files import WatchdogFeature
-from agent.eye.bookmarks import BookmarksFileFeature
+from eye.eye import Eye
+from eye.files import WatchdogFeature
+from eye.bookmarks import BookmarksFileFeature
 import asyncio
 
 

@@ -2,7 +2,7 @@ import asyncio
 from pathlib import Path
 from agent.bookmarks.loader import find_firefox_db
 import sqlite3
-from agent.eye.eye import EyeService
+from eye.eye import EyeService
 
 
 class BookmarksFileFeature(EyeService):

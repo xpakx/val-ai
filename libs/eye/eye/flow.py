@@ -1,5 +1,5 @@
 import asyncio
-from agent.eye.eye import Eye, EyeService
+from eye.eye import Eye, EyeService
 from typing import Callable, Any, Self, cast
 from inspect import iscoroutinefunction
 from dataclasses import dataclass, field

@@ -1,7 +1,7 @@
 import asyncio
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from agent.eye.eye import EyeService
+from eye.eye import EyeService
 from pathspec import PathSpec
 from pathlib import Path
 from typing import Sequence, cast

@@ -10,7 +10,6 @@ dependencies = [
     "pygixml>=0.12.0",
     "requests>=2.33.1",
     "selectolax>=0.4.10",
-    "watchdog>=6.0.0",
 ]
 
 [tool.pyrefly]
