@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "tools",
     "msgspec>=0.20.0",
     "pathspec>=1.1.1",
     "pygixml>=0.12.0",
@@ -23,6 +24,9 @@ dev = [
     "pyrefly>=0.60.0",
     "types-requests>=2.33.0.20260408",
 ]
+
+[tool.uv.sources]
+tools = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

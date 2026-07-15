@@ -1,6 +1,6 @@
 from typing import TypedDict, Literal
 import msgspec
-from agent.toolgen import Parameters
+from tools.toolgen import Parameters
 
 Role = Literal["system", "user", "assistant", "tool"]
 

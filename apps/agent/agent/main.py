@@ -1,8 +1,8 @@
 from agent.config import load_config
 from agent.client import Client
-from agent.toolgen import get_tool
+from tools.toolgen import get_tool
 from agent.ui import CLIProvider
-from agent.tools import read_file, list_files, write_file, glob_files
+from tools.tools import read_file, list_files, write_file, glob_files
 from agent.systemparts import current_time
 from agent.systemprompt import get_system_prompt_info
 from agent.client.backoff import fibonacci_backoff

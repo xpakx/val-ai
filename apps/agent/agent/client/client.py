@@ -6,7 +6,7 @@ from agent.client.typedefs import (
         Message, TextMessage, OpenAIToolCall,
         OpenAIResponseFormat,
 )
-from agent.toolgen import ToolCall
+from tools.toolgen import ToolCall
 import requests
 from agent.client.json import JsonRescuer
 from agent.client.format import prepare_response_format

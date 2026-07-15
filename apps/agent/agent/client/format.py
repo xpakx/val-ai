@@ -2,7 +2,7 @@ import msgspec
 from agent.client.typedefs import (
         OpenAIResponseFormat, OpenAIResponseSchema
 )
-from agent.toolgen import Parameters, Property
+from tools.toolgen import Parameters, Property
 from typing import Literal
 
 
