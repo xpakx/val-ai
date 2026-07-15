@@ -1,14 +1,16 @@
 import inspect
 from typing import Callable, Any, Literal, cast
 from dataclasses import dataclass
-from agent.prompt.prompt import Prompt
 import msgspec
+
+from promptmachine import Prompt
 
 PropertyType = Literal[
             "string", "number", "integer",
             "boolean", "array", "object", "null"]
 
 
+# TODO: should be part of client
 class Property(msgspec.Struct, omit_defaults=True):
     type: PropertyType
     description: str | None = None
@@ -21,6 +23,7 @@ class Property(msgspec.Struct, omit_defaults=True):
     additionalProperties: bool | None = None
 
 
+# TODO: should be part of client
 class Parameters(msgspec.Struct):
     type: Literal["object"] = "object"
     properties: dict[str, Property] | msgspec.UnsetType = msgspec.UNSET
@@ -28,6 +31,7 @@ class Parameters(msgspec.Struct):
     additionalProperties: bool | msgspec.UnsetType = msgspec.UNSET
 
 
+# TODO: should be part of client
 class FunctionDefinition(msgspec.Struct, omit_defaults=True):
     name: str
     description: str | None = None
@@ -35,6 +39,7 @@ class FunctionDefinition(msgspec.Struct, omit_defaults=True):
     strict: bool | None = None
 
 
+# TODO: should be part of client
 class ToolCall(msgspec.Struct, kw_only=True):
     type: Literal["function"] = "function"
     function: FunctionDefinition

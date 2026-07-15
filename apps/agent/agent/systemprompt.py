@@ -1,6 +1,6 @@
 import inspect
 from typing import Callable, Any
-from agent.prompt import Prompt
+from promptmachine import Prompt
 
 
 class SystemPromptInformation(Prompt):

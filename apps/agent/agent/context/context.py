@@ -1,4 +1,4 @@
-from agent.prompt import PromptPart
+from promptmachine import PromptPart
 from agent.client import ChatMessage, Role
 from agent.client.typedefs import ToolResponse,  ToolCallMessage
 from agent.client.typedefs import OpenAIToolCall

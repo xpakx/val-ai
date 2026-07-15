@@ -4,8 +4,8 @@ from tools.toolgen import ToolDefinition
 from tools.toolgen import ToolCall as ToolCallGen
 from agent.ui import UIProvider
 from agent.systemprompt import SystemPromptInformation
-from agent.prompt import Prompt
-from agent.prompt.signals import signal
+from promptmachine import Prompt
+from promptmachine.signals import signal
 from agent.context import Context
 from typing import TypeIs
 

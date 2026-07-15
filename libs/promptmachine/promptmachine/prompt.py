@@ -1,8 +1,9 @@
 from typing import Protocol, Any, Self
-from agent.prompt.signals import Signal, Computed, effect, Effect
 from string import Template
 from inspect import cleandoc
 from pathlib import Path
+
+from promptmachine.signals import Signal, Computed, effect, Effect
 
 
 class PromptPart(Protocol):
