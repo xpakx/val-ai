@@ -34,7 +34,7 @@ def main(tools):
 
 
 def test():
-    from agent.context import Context
+    from context import Context
     import msgspec
 
     class Msg(msgspec.Struct):
@@ -55,5 +55,5 @@ def test():
 
 
 if __name__ == "__main__":
-    # main(True)
-    test()
+    main(True)
+    # test()

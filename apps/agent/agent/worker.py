@@ -1,6 +1,6 @@
 from client import Client
 from agent.prompt import Prompt
-from agent.context import Context
+from context import Context
 
 
 class HelperWorker:

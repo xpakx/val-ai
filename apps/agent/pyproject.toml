@@ -8,6 +8,7 @@ dependencies = [
     "tools",
     "promptmachine",
     "client",
+    "context",
     "msgspec>=0.20.0",
     "pathspec>=1.1.1",
     "pygixml>=0.12.0",
@@ -31,6 +32,7 @@ dev = [
 tools = { workspace = true }
 promptmachine = { workspace = true }
 client = { workspace = true }
+context = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

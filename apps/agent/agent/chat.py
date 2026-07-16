@@ -6,7 +6,7 @@ from agent.ui import UIProvider
 from agent.systemprompt import SystemPromptInformation
 from promptmachine import Prompt
 from promptmachine.signals import signal
-from agent.context import Context
+from context import Context
 from typing import TypeIs
 
 
