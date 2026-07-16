@@ -1,7 +1,7 @@
 from promptmachine import PromptPart
-from agent.client import ChatMessage, Role
-from agent.client.typedefs import ToolResponse,  ToolCallMessage
-from agent.client.typedefs import OpenAIToolCall
+from client import ChatMessage, Role
+from client.typedefs import ToolResponse,  ToolCallMessage
+from client.typedefs import OpenAIToolCall
 import uuid
 from datetime import datetime
 from dataclasses import dataclass, field

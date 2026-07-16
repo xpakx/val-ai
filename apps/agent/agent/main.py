@@ -1,11 +1,11 @@
-from agent.config import load_config
-from agent.client import Client
+from client.config import load_config
+from client.backoff import fibonacci_backoff
+from client import Client
 from tools.toolgen import get_tool
 from agent.ui import CLIProvider
 from tools.tools import read_file, list_files, write_file, glob_files
 from agent.systemparts import current_time
 from agent.systemprompt import get_system_prompt_info
-from agent.client.backoff import fibonacci_backoff
 from agent.chat import Chat
 
 

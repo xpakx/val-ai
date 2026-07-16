@@ -1,15 +1,15 @@
 import msgspec
 from typing import Literal, Callable, Any, TypeVar
-from agent.config import Config
-from agent.client.typedefs import (
+from client.config import Config
+from client.typedefs import (
         ChatMessage, OpenAIResponse,
         Message, TextMessage, OpenAIToolCall,
         OpenAIResponseFormat,
 )
 from tools.toolgen import ToolCall
 import requests
-from agent.client.json import JsonRescuer
-from agent.client.format import prepare_response_format
+from client.json import JsonRescuer
+from client.format import prepare_response_format
 
 
 T = TypeVar("T")

@@ -5,6 +5,7 @@ requires-python = ">=3.13"
 [manifest]
 members = [
     "agent",
+    "client",
     "eye",
     "promptmachine",
     "tools",
@@ -16,6 +17,7 @@ name = "agent"
 version = "0.1.0"
 source = { editable = "apps/agent" }
 dependencies = [
+    { name = "client" },
     { name = "msgspec" },
     { name = "pathspec" },
     { name = "promptmachine" },
@@ -33,6 +35,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "client", editable = "libs/client" },
     { name = "msgspec", specifier = ">=0.20.0" },
     { name = "pathspec", specifier = ">=1.1.1" },
     { name = "promptmachine", editable = "libs/promptmachine" },
@@ -104,6 +107,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/3d/c6/eee9dca4439b1061f76373f06ea855678cc4a64c1c3c90b50e479edbb8eb/charset_normalizer-3.4.9-cp314-cp314t-win_arm64.whl", hash = "sha256:19ac87f93086ce37b86e098888555c4b4bc48102279bae3350098c0ed664b501", size = 158037, upload-time = "2026-07-07T14:34:35.018Z" },
     { url = "https://files.pythonhosted.org/packages/98/2b/f97f1c193fb855c345d678f5077d6926034db0722df74c8f057020e05a25/charset_normalizer-3.4.9-py3-none-any.whl", hash = "sha256:68e5f26a1ad57ded6d1cfb85331d1c1a195314756471d97758c48498bb4dcdf5", size = 64538, upload-time = "2026-07-07T14:34:56.993Z" },
 ]
+
+[[package]]
+name = "client"
+version = "0.1.0"
+source = { editable = "libs/client" }
 
 [[package]]
 name = "eye"

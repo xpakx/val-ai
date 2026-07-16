@@ -1,4 +1,4 @@
-from agent.client import Client
+from client import Client
 from agent.prompt import Prompt
 from agent.context import Context
 

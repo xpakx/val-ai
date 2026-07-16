@@ -6,7 +6,7 @@ import msgspec
 from datetime import datetime, timedelta
 from contextlib import closing
 
-from agent.config import get_xdg_data_location
+from client.config import get_xdg_data_location
 
 
 PRIME_EPOCH = datetime(1970, 1, 1)

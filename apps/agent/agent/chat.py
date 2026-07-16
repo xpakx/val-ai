@@ -1,5 +1,5 @@
-from agent.client import Client, ToolCall, Message, TextMessage
-from agent.client.typedefs import OpenAIToolCall
+from client import Client, ToolCall, Message, TextMessage
+from client.typedefs import OpenAIToolCall
 from tools.toolgen import ToolDefinition
 from tools.toolgen import ToolCall as ToolCallGen
 from agent.ui import UIProvider

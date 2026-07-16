@@ -1,5 +1,5 @@
 import msgspec
-from agent.client.typedefs import (
+from client.typedefs import (
         OpenAIResponseFormat, OpenAIResponseSchema
 )
 from tools.toolgen import Parameters, Property
