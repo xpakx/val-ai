@@ -12,21 +12,24 @@ class Location(msgspec.Struct):
 
 
 class GeocodingResponse(msgspec.Struct):
-    generationtime_ms: float
+    time: float = msgspec.field(name="generationtime_ms")
     results: list[Location] | None = None
 
 
 class CurrentWeather(msgspec.Struct):
     time: str
     interval: int
-    temperature_2m: float
+    temperature: float = msgspec.field(name="temperature_2m")
     weather_code: int
+    wind_speed: float = msgspec.field(name="wind_speed_10m")
+    wind_direction: float = msgspec.field(name="wind_direction_10m")
+    humidity: int = msgspec.field(name="relative_humidity_2m")
 
 
 class WeatherResponse(msgspec.Struct):
     latitude: float
     longitude: float
-    generationtime_ms: float
+    time: float = msgspec.field(name="generationtime_ms")
     current: CurrentWeather
 
 
@@ -51,7 +54,7 @@ def get_weather(lat: float, long: float) -> WeatherResponse:
     data = {
         "latitude": lat,
         "longitude": long,
-        "current": "temperature_2m,weather_code",
+        "current": "temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,relative_humidity_2m",
         "timezone": "auto"
     }
     headers = {'User-Agent': 'WeatherTool/1.0'}
