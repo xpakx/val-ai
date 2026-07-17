@@ -16,7 +16,16 @@ members = ['libs/*', 'apps/*']
 dev = [
     "pyrefly>=1.1.1",
     "pytest>=9.1.1",
+    "ruff>=0.15.22",
 ]
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib -v --tb=short"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B"]
+ignore = [ "E501" ]

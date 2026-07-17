@@ -1,4 +1,4 @@
-.PHONY: run  eye
+.PHONY: run  eye test lint check
 
 all: run
 
@@ -7,3 +7,12 @@ run:
 
 eye:
 	uv run --package eye python -m eye.example
+
+test:
+	uvx run pytest
+
+lint:
+	uvx ruff format
+
+check:
+	uvx ruff check
