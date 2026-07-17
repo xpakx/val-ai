@@ -4,9 +4,8 @@ from client.config import Config
 from client.typedefs import (
         ChatMessage, OpenAIResponse,
         Message, TextMessage, OpenAIToolCall,
-        OpenAIResponseFormat,
+        OpenAIResponseFormat, ToolCall
 )
-from tools.toolgen import ToolCall
 import requests
 from client.json import JsonRescuer
 from client.format import prepare_response_format

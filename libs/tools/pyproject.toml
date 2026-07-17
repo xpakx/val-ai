@@ -5,12 +5,13 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-	"promptmachine"
+	"promptmachine",
+	"client",
 ]
-# TODO: should rely on `client`
 
 [tool.uv.sources]
 promptmachine = { workspace = true }
+client = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

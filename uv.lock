@@ -288,11 +288,15 @@ name = "tools"
 version = "0.1.0"
 source = { editable = "libs/tools" }
 dependencies = [
+    { name = "client" },
     { name = "promptmachine" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "promptmachine", editable = "libs/promptmachine" }]
+requires-dist = [
+    { name = "client", editable = "libs/client" },
+    { name = "promptmachine", editable = "libs/promptmachine" },
+]
 
 [[package]]
 name = "types-requests"

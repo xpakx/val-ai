@@ -1,8 +1,43 @@
 from typing import TypedDict, Literal
 import msgspec
-from tools.toolgen import Parameters
 
 Role = Literal["system", "user", "assistant", "tool"]
+
+
+PropertyType = Literal[
+            "string", "number", "integer",
+            "boolean", "array", "object", "null"]
+
+
+class Property(msgspec.Struct, omit_defaults=True):
+    type: PropertyType
+    description: str | None = None
+    enum: list[str | int | float] | None = None
+    # for array
+    items: "Property | None" = None
+    # for objuect
+    properties: dict[str, "Property"] | None = None
+    required: list[str] | None = None
+    additionalProperties: bool | None = None
+
+
+class Parameters(msgspec.Struct):
+    type: Literal["object"] = "object"
+    properties: dict[str, Property] | msgspec.UnsetType = msgspec.UNSET
+    required: list[str] | msgspec.UnsetType = msgspec.UNSET
+    additionalProperties: bool | msgspec.UnsetType = msgspec.UNSET
+
+
+class FunctionDefinition(msgspec.Struct, omit_defaults=True):
+    name: str
+    description: str | None = None
+    parameters: Parameters | None = None
+    strict: bool | None = None
+
+
+class ToolCallGen(msgspec.Struct, kw_only=True):
+    type: Literal["function"] = "function"
+    function: FunctionDefinition
 
 
 class ChatTextMessage(TypedDict):

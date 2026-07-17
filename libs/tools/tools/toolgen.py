@@ -1,48 +1,16 @@
 import inspect
-from typing import Callable, Any, Literal, cast
+from typing import Callable, Any, cast
 from dataclasses import dataclass
 import msgspec
 
 from promptmachine import Prompt
-
-PropertyType = Literal[
-            "string", "number", "integer",
-            "boolean", "array", "object", "null"]
-
-
-# TODO: should be part of client
-class Property(msgspec.Struct, omit_defaults=True):
-    type: PropertyType
-    description: str | None = None
-    enum: list[str | int | float] | None = None
-    # for array
-    items: "Property | None" = None
-    # for objuect
-    properties: dict[str, "Property"] | None = None
-    required: list[str] | None = None
-    additionalProperties: bool | None = None
-
-
-# TODO: should be part of client
-class Parameters(msgspec.Struct):
-    type: Literal["object"] = "object"
-    properties: dict[str, Property] | msgspec.UnsetType = msgspec.UNSET
-    required: list[str] | msgspec.UnsetType = msgspec.UNSET
-    additionalProperties: bool | msgspec.UnsetType = msgspec.UNSET
-
-
-# TODO: should be part of client
-class FunctionDefinition(msgspec.Struct, omit_defaults=True):
-    name: str
-    description: str | None = None
-    parameters: Parameters | None = None
-    strict: bool | None = None
-
-
-# TODO: should be part of client
-class ToolCall(msgspec.Struct, kw_only=True):
-    type: Literal["function"] = "function"
-    function: FunctionDefinition
+from client.typedefs import (
+        FunctionDefinition,
+        PropertyType,
+        ToolCallGen,
+        Parameters,
+        Property
+)
 
 
 class ToolDescription(Prompt):
@@ -116,7 +84,7 @@ class ToolDescription(Prompt):
             return 'boolean'
         return 'null'
 
-    def generate_call(self) -> ToolCall:
+    def generate_call(self) -> ToolCallGen:
         func_doc = inspect.getdoc(self.target_function)
         if (not func_doc):
             raise Exception('Tool does not have description')
@@ -146,7 +114,7 @@ class ToolDescription(Prompt):
                 description=func_doc,
                 parameters=params,
         )
-        return ToolCall(function=definition)
+        return ToolCallGen(function=definition)
 
     def parse_args(self, data: str):
         return msgspec.to_builtins(

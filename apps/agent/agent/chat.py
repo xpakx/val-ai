@@ -1,7 +1,7 @@
 from client import Client, ToolCall, Message, TextMessage
 from client.typedefs import OpenAIToolCall
 from tools.toolgen import ToolDefinition
-from tools.toolgen import ToolCall as ToolCallGen
+from client.typedefs import ToolCallGen
 from agent.ui import UIProvider
 from agent.systemprompt import SystemPromptInformation
 from promptmachine import Prompt
