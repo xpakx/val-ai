@@ -11,3 +11,8 @@ package = false
 
 [tool.uv.workspace]
 members = ['libs/*', 'apps/*']
+
+[dependency-groups]
+dev = [
+    "pyrefly>=1.1.1",
+]

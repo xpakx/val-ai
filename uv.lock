@@ -31,7 +31,6 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "pyrefly" },
     { name = "types-requests" },
 ]
 
@@ -49,10 +48,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [
-    { name = "pyrefly", specifier = ">=0.60.0" },
-    { name = "types-requests", specifier = ">=2.33.0.20260408" },
-]
+dev = [{ name = "types-requests", specifier = ">=2.33.0.20260408" }]
 
 [[package]]
 name = "certifi"
@@ -323,6 +319,16 @@ wheels = [
 name = "val-ai"
 version = "0.1.0"
 source = { virtual = "." }
+
+[package.dev-dependencies]
+dev = [
+    { name = "pyrefly" },
+]
+
+[package.metadata]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pyrefly", specifier = ">=1.1.1" }]
 
 [[package]]
 name = "watchdog"
