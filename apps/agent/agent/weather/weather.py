@@ -67,6 +67,7 @@ def get_weather(lat: float, long: float) -> WeatherResponse:
 if __name__ == "__main__":
     result = fetch_city_data("London")
     print(result)
-    city = result.results[0]
-    weather = get_weather(city.latitude, city.longitude)
-    print(weather)
+    if result.results:
+        city = result.results[0]
+        weather = get_weather(city.latitude, city.longitude)
+        print(weather)

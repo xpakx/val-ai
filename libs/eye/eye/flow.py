@@ -1,6 +1,6 @@
 import asyncio
 from eye.eye import Eye, EyeService
-from typing import Callable, Any, Self, cast
+from typing import Callable, Any, cast
 from inspect import iscoroutinefunction
 from dataclasses import dataclass, field
 
@@ -19,7 +19,7 @@ class LoopContext:
     pending_signals: dict[str, asyncio.Event] = field(default_factory=dict)
     data: dict[str, Any] = field(default_factory=dict)
 
-    def next(self) -> Self:
+    def next(self) -> "LoopContext":
         return LoopContext(count=self.count+1)
 
 

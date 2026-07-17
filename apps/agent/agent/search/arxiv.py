@@ -12,8 +12,8 @@ class ArXivData(msgspec.Struct):
     pdf_link: str | None = None
     published: str | None = None
     journal: str | None = None
-    categories: list[str] | None = None
-    authors: list[str] | None = None
+    categories: list[str] = msgspec.field(default_factory=list)
+    authors: list[str] = msgspec.field(default_factory=list)
 
 
 def search_arxiv(query: str) -> list[ArXivData]:
@@ -28,7 +28,7 @@ def search_arxiv(query: str) -> list[ArXivData]:
     links: list[ArXivData] = []
 
     for entry in entries:
-        struct = ArXivData(categories=[], authors=[])
+        struct = ArXivData()
         for child in entry.node.children():
             if child.name == 'id':
                 struct.id = child.text()

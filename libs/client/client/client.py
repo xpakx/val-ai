@@ -4,7 +4,7 @@ from client.config import Config
 from client.typedefs import (
         ChatMessage, OpenAIResponse,
         Message, TextMessage, OpenAIToolCall,
-        OpenAIResponseFormat, ToolCall
+        OpenAIResponseFormat, ToolCallGen
 )
 import requests
 from client.json import JsonRescuer
@@ -53,7 +53,7 @@ class Client:
     def call_api(
             self,
             messages: list[ChatMessage],
-            tools: list[ToolCall] | None = None,
+            tools: list[ToolCallGen] | None = None,
             tool_choice: Literal['auto', 'none', 'required'] | None = None,
             response_format: OpenAIResponseFormat | type[msgspec.Struct] | None = None,
             ) -> OpenAIResponse:
@@ -122,7 +122,7 @@ class Client:
     def ask_with_tools(
         self,
         messages: list[ChatMessage],
-        tools: list[ToolCall] | None = None,
+        tools: list[ToolCallGen] | None = None,
         tool_choice: Literal['auto', 'none', 'required'] | None = None,
     ) -> tuple[list[TextMessage], list[OpenAIToolCall]]:
         response = self.call_api(messages, tools, tool_choice)

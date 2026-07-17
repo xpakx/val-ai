@@ -1,5 +1,5 @@
 from client import Client
-from agent.prompt import Prompt
+from promptmachine import Prompt
 from context import Context
 
 
