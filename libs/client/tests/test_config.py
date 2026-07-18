@@ -12,6 +12,7 @@ from client.config import (
     get_xdg,
     get_xdg_config_location,
     get_xdg_data_location,
+    load_config,
     load_config_from_file,
     overwrite_from_env,
 )
@@ -158,3 +159,17 @@ def test_check_files_no_files_found(mock_env, mock_cwd, mock_home):
     assert result.api_key is None
     assert result.provider is None
     assert result.model is None
+
+
+# 'integration'
+def test_load_config_integration(mock_env, tmp_path):
+    conf_file = tmp_path / "config.json"
+    conf_file.write_text('{"provider": "openai", "model": "gpt-3.5"}')
+
+    with patch.dict(os.environ, {"VAL_API_KEY": "env_secret", "VAL_MODEL": "gpt-4"}):
+        config = load_config(conf_file)
+
+    assert isinstance(config, Config)
+    assert config.api_key == "env_secret"
+    assert config.provider == "openai"
+    assert config.model == "gpt-4"
