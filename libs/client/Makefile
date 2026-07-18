@@ -6,7 +6,7 @@ check:
 	uvx ruff format --diff
 
 test:
-	uvx pytest
+	uv run --dev pytest
 
 format:
 	uvx ruff format
