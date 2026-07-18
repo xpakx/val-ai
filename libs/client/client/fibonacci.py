@@ -1,14 +1,13 @@
-import time
 import asyncio
-from typing import Callable, TypeVar, Awaitable
+import time
+from collections.abc import Awaitable, Callable
+from typing import TypeVar
 
 T = TypeVar("T")
 
 
 def fibonacci_backoff(
-        task: Callable[[], T],
-        max_attempts: int,
-        start_index: int = 0
+    task: Callable[[], T], max_attempts: int, start_index: int = 0
 ) -> T | None:
     a, b = 1, 1
     i = 0
@@ -34,9 +33,7 @@ def fibonacci_backoff(
 
 
 async def fibonacci_backoff_async(
-    task: Callable[[], Awaitable[T]],
-    max_attempts: int,
-    start_index: int = 0
+    task: Callable[[], Awaitable[T]], max_attempts: int, start_index: int = 0
 ) -> T | None:
     a, b = 1, 1
     i = 0

@@ -1,15 +1,16 @@
-from typing import TypedDict, Literal
+from typing import Literal, TypedDict
+
 import msgspec
 
 Role = Literal["system", "user", "assistant", "tool"]
 
 
 PropertyType = Literal[
-            "string", "number", "integer",
-            "boolean", "array", "object", "null"]
+    "string", "number", "integer", "boolean", "array", "object", "null"
+]
 
 
-class Property(msgspec.Struct, omit_defaults=True):
+class Property(msgspec.Struct, omit_defaults=True, rename="camel"):
     type: PropertyType
     description: str | None = None
     enum: list[str | int | float] | None = None
@@ -18,14 +19,14 @@ class Property(msgspec.Struct, omit_defaults=True):
     # for objuect
     properties: dict[str, "Property"] | None = None
     required: list[str] | None = None
-    additionalProperties: bool | None = None
+    additional_properties: bool | None = None
 
 
-class Parameters(msgspec.Struct):
+class Parameters(msgspec.Struct, rename="camel"):
     type: Literal["object"] = "object"
     properties: dict[str, Property] | msgspec.UnsetType = msgspec.UNSET
     required: list[str] | msgspec.UnsetType = msgspec.UNSET
-    additionalProperties: bool | msgspec.UnsetType = msgspec.UNSET
+    additional_properties: bool | msgspec.UnsetType = msgspec.UNSET
 
 
 class FunctionDefinition(msgspec.Struct, omit_defaults=True):

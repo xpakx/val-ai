@@ -1,6 +1,7 @@
-import msgspec
 import os
 from pathlib import Path
+
+import msgspec
 
 
 class RawConfig(msgspec.Struct, rename="camel"):
@@ -37,18 +38,18 @@ def check_files(filename: str | Path | None) -> RawConfig:
         filepath = Path(filename)
         return load_config_from_file(filepath)
 
-    local_config = Path('./valconfig.json')
+    local_config = Path("./valconfig.json")
     if local_config.is_file():
         return load_config_from_file(local_config)
 
     config_dir = get_xdg_config_location()
-    config_file = config_dir / 'config.json'
+    config_file = config_dir / "config.json"
     if config_file.is_file():
         return load_config_from_file(config_file)
     return RawConfig()
 
 
-def load_config_from_file(filepath:  Path) -> RawConfig:
+def load_config_from_file(filepath: Path) -> RawConfig:
     if not filepath.is_file():
         raise FileNotFoundError()
     data = filepath.read_text()
@@ -58,7 +59,7 @@ def load_config_from_file(filepath:  Path) -> RawConfig:
         config = msgspec.json.decode(data, type=RawConfig)
         return config
     except msgspec.DecodeError as e:
-        raise Exception(f"decode error: {e}")
+        raise Exception(f"decode error: {e}") from e
 
 
 def get_xdg(var: str, default: str) -> Path:
@@ -71,10 +72,10 @@ def get_xdg(var: str, default: str) -> Path:
 
 
 def get_xdg_config_location() -> Path:
-    path = get_xdg('XDG_CONFIG_HOME', '.config')
-    path = path / 'val'
+    path = get_xdg("XDG_CONFIG_HOME", ".config")
+    path = path / "val"
     return path
 
 
 def get_xdg_data_location() -> Path:
-    return get_xdg('XDG_DATA_HOME', '.local/share')
+    return get_xdg("XDG_DATA_HOME", ".local/share")

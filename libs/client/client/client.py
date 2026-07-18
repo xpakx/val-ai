@@ -1,15 +1,21 @@
-import msgspec
-from typing import Literal, Callable, Any, TypeVar
-from client.config import Config
-from client.typedefs import (
-        ChatMessage, OpenAIResponse,
-        Message, TextMessage, OpenAIToolCall,
-        OpenAIResponseFormat, ToolCallGen
-)
-import requests
-from client.json import JsonRescuer
-from client.format import prepare_response_format
+from collections.abc import Callable
+from typing import Any, Literal, TypeVar
 
+import msgspec
+import requests
+
+from client.config import Config
+from client.format import prepare_response_format
+from client.json import JsonRescuer
+from client.typedefs import (
+    ChatMessage,
+    Message,
+    OpenAIResponse,
+    OpenAIResponseFormat,
+    OpenAIToolCall,
+    TextMessage,
+    ToolCallGen,
+)
 
 T = TypeVar("T")
 
@@ -19,7 +25,7 @@ class Client:
         self.config = config
         self.headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {config.api_key}"
+            "Authorization": f"Bearer {config.api_key}",
         }
         self.backoff = backoff
         self._temperature = 0.7
@@ -35,28 +41,25 @@ class Client:
         self.backoff = None
 
     def completion_url(self) -> str:
-        return f'{self.config.provider}chat/completions'
+        return f"{self.config.provider}chat/completions"
 
-    def call_backoff(
-            self, payload: dict[str, Any]) -> requests.Response | None:
+    def call_backoff(self, payload: dict[str, Any]) -> requests.Response | None:
         if not self.backoff:
             return None
         return self.backoff(
-                lambda: requests.post(
-                        self.completion_url(),
-                        headers=self.headers,
-                        json=payload
-                ),
-                5
+            lambda: requests.post(
+                self.completion_url(), headers=self.headers, json=payload
+            ),
+            5,
         )
 
     def call_api(
-            self,
-            messages: list[ChatMessage],
-            tools: list[ToolCallGen] | None = None,
-            tool_choice: Literal['auto', 'none', 'required'] | None = None,
-            response_format: OpenAIResponseFormat | type[msgspec.Struct] | None = None,
-            ) -> OpenAIResponse:
+        self,
+        messages: list[ChatMessage],
+        tools: list[ToolCallGen] | None = None,
+        tool_choice: Literal["auto", "none", "required"] | None = None,
+        response_format: OpenAIResponseFormat | type[msgspec.Struct] | None = None,
+    ) -> OpenAIResponse:
         payload = {
             "model": self.config.model,
             "messages": messages,
@@ -69,8 +72,7 @@ class Client:
             payload["tool_choice"] = tool_choice
         if response_format:
             if isinstance(response_format, OpenAIResponseFormat):
-                payload["response_format"] = msgspec.to_builtins(
-                        response_format)
+                payload["response_format"] = msgspec.to_builtins(response_format)
             else:
                 payload["response_format"] = msgspec.to_builtins(
                     prepare_response_format(response_format)
@@ -80,9 +82,7 @@ class Client:
             response = self.call_backoff(payload)
         else:
             response = requests.post(
-                self.completion_url(),
-                headers=self.headers,
-                json=payload
+                self.completion_url(), headers=self.headers, json=payload
             )
 
         if response is None:
@@ -111,8 +111,7 @@ class Client:
             return []
         return self._decode(content, list[Message])
 
-    def ask_typed(
-            self, messages: list[ChatMessage], target: type[T]) -> T:
+    def ask_typed(self, messages: list[ChatMessage], target: type[T]) -> T:
         response = self.call_api(messages)
         content = response.choices[0].message.content
         if not content:
@@ -123,7 +122,7 @@ class Client:
         self,
         messages: list[ChatMessage],
         tools: list[ToolCallGen] | None = None,
-        tool_choice: Literal['auto', 'none', 'required'] | None = None,
+        tool_choice: Literal["auto", "none", "required"] | None = None,
     ) -> tuple[list[TextMessage], list[OpenAIToolCall]]:
         response = self.call_api(messages, tools, tool_choice)
         content = response.choices[0].message.content
@@ -132,8 +131,7 @@ class Client:
             return [], tool_calls
         return self._decode(content, list[TextMessage]), tool_calls
 
-    def _decode(
-            self, text: str, target_type: type[T]) -> T:
+    def _decode(self, text: str, target_type: type[T]) -> T:
         print(text)
         try:
             return msgspec.json.decode(text, type=target_type)

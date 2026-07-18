@@ -1,7 +1,13 @@
 .PHONY: check test
 
 check:
-	uv run pyrefly check
+	uvx pyrefly check
+	uvx ruff check
+	uvx ruff format --diff
 
 test:
 	uvx pytest
+
+format:
+	uvx ruff format
+	uvx ruff check --fix
