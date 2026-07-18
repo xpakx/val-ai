@@ -1,12 +1,15 @@
 import os
 from unittest.mock import patch
-
+from pathlib import Path
 import msgspec
 import pytest
 from client.config import (
     Config,
     RawConfig,
     finalize_config,
+    get_xdg,
+    get_xdg_config_location,
+    get_xdg_data_location,
     overwrite_from_env,
 )
 
@@ -15,6 +18,14 @@ from client.config import (
 def mock_env():
     with patch.dict(os.environ, {}, clear=True):
         yield
+
+
+@pytest.fixture
+def mock_home(tmp_path):
+    home_dir = tmp_path / "mock_home"
+    home_dir.mkdir()
+    with patch.object(Path, "home", return_value=home_dir):
+        yield home_dir
 
 
 def test_overwrite_from_env(mock_env):
@@ -47,3 +58,26 @@ def test_finalize_config_missing_fields_raises():
     raw = RawConfig(api_key="123")
     with pytest.raises(msgspec.ValidationError):
         finalize_config(raw)
+
+
+# paths
+def test_get_xdg_with_env(mock_env, tmp_path):
+    custom_path = tmp_path / "custom"
+
+    with patch.dict(os.environ, {"MY_VAR": str(custom_path)}):
+        result = get_xdg("MY_VAR", ".default")
+
+    assert result == custom_path
+
+
+def test_get_xdg_without_env(mock_env, mock_home):
+    result = get_xdg("MY_VAR", ".default")
+    assert result == mock_home / ".default"
+
+
+def test_get_xdg_config_location(mock_env, mock_home):
+    assert get_xdg_config_location() == mock_home / ".config" / "val"
+
+
+def test_get_xdg_data_location(mock_env, mock_home):
+    assert get_xdg_data_location() == mock_home / ".local/share"
