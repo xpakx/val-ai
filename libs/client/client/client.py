@@ -43,13 +43,17 @@ class Client:
     def completion_url(self) -> str:
         return f"{self.config.provider}chat/completions"
 
+    def request(self, payload):
+        return requests.post(
+                self.completion_url(), headers=self.headers, json=payload
+            )
+
+    # TODO: 429 error
     def call_backoff(self, payload: dict[str, Any]) -> requests.Response | None:
         if not self.backoff:
             return None
         return self.backoff(
-            lambda: requests.post(
-                self.completion_url(), headers=self.headers, json=payload
-            ),
+            lambda: self.request(payload),
             5,
         )
 
