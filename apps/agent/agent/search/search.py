@@ -10,6 +10,7 @@ class Link(msgspec.Struct):
 
 
 def search(query: str) -> list[Link]:
+    '''Search internet'''
     url = "https://lite.duckduckgo.com/lite/"
     headers = {"User-Agent": "Mozilla/5.0"}
     data = {"q": query}

@@ -2,16 +2,19 @@ from client.config import load_config
 from client.backoff import fibonacci_backoff
 from client import Client
 from tools.tools import FileTool
+from tools.toolgen import get_tool
 from agent.ui import CLIProvider
 from agent.systemparts import current_time
 from agent.systemprompt import get_system_prompt_info
 from agent.chat import Chat
+from agent.search.search import search
 
 
 def prepare_tools(chat: Chat) -> None:
     tools = FileTool()
     for tool in tools.tools():
         chat.add_tool(tool)
+    chat.add_tool(get_tool(search))
 
 
 def main(tools):

@@ -4,7 +4,7 @@ from tools.toolgen import get_tool, ToolDefinition
 
 class FileTool:
     def __init__(self, base_path: str | Path = '.'):
-        self.root = Path(base_path).resolve()
+        self.root = Path(base_path).expanduser().resolve()
 
     def read(self) -> ToolDefinition:
         func = self.read_file
