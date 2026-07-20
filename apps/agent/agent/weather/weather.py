@@ -49,7 +49,14 @@ def fetch_city_data(query: str) -> GeocodingResponse:
     return result
 
 
-def get_weather(lat: float, long: float) -> WeatherResponse:
+def get_weather(city: str) -> WeatherResponse | None:
+    result = fetch_city_data(city)
+    if result.results:
+        city = result.results[0]
+        return get_weather_coord(city.latitude, city.longitude)
+
+
+def get_weather_coord(lat: float, long: float) -> WeatherResponse:
     url = "https://api.open-meteo.com/v1/forecast"
     data = {
         "latitude": lat,
@@ -69,5 +76,5 @@ if __name__ == "__main__":
     print(result)
     if result.results:
         city = result.results[0]
-        weather = get_weather(city.latitude, city.longitude)
+        weather = get_weather_coord(city.latitude, city.longitude)
         print(weather)
