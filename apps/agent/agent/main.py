@@ -1,23 +1,17 @@
 from client.config import load_config
 from client.backoff import fibonacci_backoff
 from client import Client
-from tools.toolgen import get_tool
+from tools.tools import FileTool
 from agent.ui import CLIProvider
-from tools.tools import read_file, list_files, write_file, glob_files
 from agent.systemparts import current_time
 from agent.systemprompt import get_system_prompt_info
 from agent.chat import Chat
 
 
 def prepare_tools(chat: Chat) -> None:
-    read_tool = get_tool(read_file)
-    chat.add_tool(read_tool)
-    list_tool = get_tool(list_files)
-    chat.add_tool(list_tool)
-    write_tool = get_tool(write_file)
-    chat.add_tool(write_tool)
-    glob_tool = get_tool(glob_files)
-    chat.add_tool(glob_tool)
+    tools = FileTool()
+    for tool in tools.tools():
+        chat.add_tool(tool)
 
 
 def main(tools):
