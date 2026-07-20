@@ -1,6 +1,6 @@
 import msgspec
-from agent.bookmarks.loader import find_firefox_db, get_bookmarks
-from agent.bookmarks.loader import get_bookmarks_by_name
+
+from agent.bookmarks.loader import find_firefox_db, get_bookmarks, get_bookmarks_by_name
 
 
 def bookmark_tool(name: str | None = None) -> str:
@@ -13,4 +13,4 @@ def bookmark_tool(name: str | None = None) -> str:
     else:
         bookmarks = get_bookmarks(db)
     data = msgspec.json.encode(bookmarks)
-    return data.decode('utf-8')
+    return data.decode("utf-8")

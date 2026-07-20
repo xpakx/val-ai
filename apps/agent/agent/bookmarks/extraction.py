@@ -1,9 +1,10 @@
-from typing import Protocol
-from agent.bookmarks.loader import FirefoxBookmarkBridge
-from agent.bookmarks.loader import BookmarkData, DbBridge
-import msgspec
 import re
 from pathlib import Path
+from typing import Protocol
+
+import msgspec
+
+from agent.bookmarks.loader import BookmarkData, DbBridge, FirefoxBookmarkBridge
 
 
 class ProcessAction(Protocol):
@@ -55,11 +56,11 @@ class FilterAction(BaseAction):
     def __init__(self, domain: str):
         self.domain = domain
         self._remove_protocol()
-        self.rev_domain = domain[::-1] + '.'
+        self.rev_domain = domain[::-1] + "."
         super().__init__()
 
     def _remove_protocol(self):
-        self.domain = re.sub(r'^(?i)https?://', '', self.domain)
+        self.domain = re.sub(r"^(?i)https?://", "", self.domain)
 
     def process(self, bookmark) -> None:
         if self.next and self.compare(bookmark):
@@ -112,11 +113,10 @@ if __name__ == "__main__":
     sink = ListSinkAction()
     bookmarks = BookmarkExtractor(FirefoxBookmarkBridge())
     (
-            bookmarks
-            .add_action(FilterAction("youtube.com"))
-            .then(RemoveSuffixAction("- Youtube"))
-            .then(PrintAction())
-            .then(sink)
+        bookmarks.add_action(FilterAction("youtube.com"))
+        .then(RemoveSuffixAction("- Youtube"))
+        .then(PrintAction())
+        .then(sink)
     )
     bookmarks.process()
     sink.save("./test.json")

@@ -1,4 +1,4 @@
-from typing import Protocol, Any
+from typing import Any, Protocol
 
 
 class UIProvider(Protocol):
@@ -21,7 +21,7 @@ class CLIProvider:
         print(text)
 
     def say(self, actor: str, text: str) -> None:
-        if actor == 'Agent':
+        if actor == "Agent":
             print(f"\033[94m{actor}\033[0m:", end=" ")
             print(text)
         else:

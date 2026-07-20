@@ -1,13 +1,14 @@
-from client.config import load_config
-from client.backoff import fibonacci_backoff
 from client import Client
-from tools.tools import FileTool
+from client.backoff import fibonacci_backoff
+from client.config import load_config
 from tools.toolgen import get_tool
-from agent.ui import CLIProvider
-from agent.systemparts import current_time
-from agent.systemprompt import get_system_prompt_info
+from tools.tools import FileTool
+
 from agent.chat import Chat
 from agent.search.search import search
+from agent.systemparts import current_time
+from agent.systemprompt import get_system_prompt_info
+from agent.ui import CLIProvider
 
 
 def prepare_tools(chat: Chat) -> None:
@@ -31,18 +32,19 @@ def main(tools):
 
 
 def test():
-    from context import Context
     import msgspec
+    from context import Context
 
     class Msg(msgspec.Struct):
         message: str
+
     config = load_config("data/config.json")
     client = Client(config, fibonacci_backoff)
     context = Context()
-    context.push('user', 'hello, how are you?')
+    context.push("user", "hello, how are you?")
     resp = client.call_api(
-            context.get_messages(),
-            response_format=Msg,
+        context.get_messages(),
+        response_format=Msg,
     )
     msg = resp.choices[0].message.content
     if not msg:

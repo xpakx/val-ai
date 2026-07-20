@@ -1,5 +1,7 @@
 import inspect
-from typing import Callable, Any
+from collections.abc import Callable
+from typing import Any
+
 from promptmachine import Prompt
 
 
@@ -19,20 +21,18 @@ class SystemPromptInformation(Prompt):
         pass
 
     def _do_generate(self) -> str:
-        desc = self._description or ''
+        desc = self._description or ""
         func_result = self.target_function()
         return f"{desc}: {func_result}"
 
     def _get_docstring_description(self, docstring: str) -> str | None:
-        lines = [
-                line.strip() for line in docstring.split('\n') if line.strip()
-        ]
+        lines = [line.strip() for line in docstring.split("\n") if line.strip()]
         return lines[0] if lines else None
 
     def generate(self) -> str:
         func_doc = inspect.getdoc(self.target_function)
-        if (not func_doc):
-            raise Exception('Prompt provider does not have description')
+        if not func_doc:
+            raise Exception("Prompt provider does not have description")
         return func_doc
 
 

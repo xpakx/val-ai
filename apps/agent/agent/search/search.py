@@ -1,6 +1,6 @@
+import msgspec
 import requests
 from selectolax.parser import HTMLParser
-import msgspec
 
 
 class Link(msgspec.Struct):
@@ -10,7 +10,7 @@ class Link(msgspec.Struct):
 
 
 def search(query: str) -> list[Link]:
-    '''Search internet'''
+    """Search internet"""
     url = "https://lite.duckduckgo.com/lite/"
     headers = {"User-Agent": "Mozilla/5.0"}
     data = {"q": query}
@@ -18,19 +18,19 @@ def search(query: str) -> list[Link]:
     response.raise_for_status()
     tree = HTMLParser(response.text)
 
-    link_nodes = tree.css('.result-link')
-    snippet_nodes = tree.css('.result-snippet')
+    link_nodes = tree.css(".result-link")
+    snippet_nodes = tree.css(".result-snippet")
     links: list[Link] = []
 
     for link, snippet in zip(link_nodes, snippet_nodes):
-        href = link.attributes.get('href')
+        href = link.attributes.get("href")
         if not href:
             continue
-        links.append(Link(
-            name=link.text().strip(),
-            link=href,
-            description=snippet.text().strip()
-        ))
+        links.append(
+            Link(
+                name=link.text().strip(), link=href, description=snippet.text().strip()
+            )
+        )
 
     return links
 

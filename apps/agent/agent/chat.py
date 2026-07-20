@@ -1,30 +1,26 @@
-from client import Client, ToolCall, Message, TextMessage
-from client.typedefs import OpenAIToolCall
-from tools.toolgen import ToolDefinition
-from client.typedefs import ToolCallGen
-from agent.ui import UIProvider
-from agent.systemprompt import SystemPromptInformation
+from typing import TypeIs
+
+from client import Client, Message, TextMessage, ToolCall
+from client.typedefs import OpenAIToolCall, ToolCallGen
+from context import Context
 from promptmachine import Prompt
 from promptmachine.signals import signal
-from context import Context
-from typing import TypeIs
+from tools.toolgen import ToolDefinition
+
+from agent.systemprompt import SystemPromptInformation
+from agent.ui import UIProvider
 
 
 def is_tool_call(val: Message) -> TypeIs[ToolCall]:
-    return val.type == 'tool'
+    return val.type == "tool"
 
 
 def is_text_msg(val: Message) -> TypeIs[TextMessage]:
-    return val.type == 'text'
+    return val.type == "text"
 
 
 class Chat:
-    def __init__(
-        self,
-        client: Client,
-        ui: UIProvider,
-        tool_support: bool = False
-    ):
+    def __init__(self, client: Client, ui: UIProvider, tool_support: bool = False):
         self.client = client
         self.tools: dict[str, ToolDefinition] = {}
         self.conversation = Context()
@@ -36,7 +32,7 @@ class Chat:
 
     def prepare_prompt(self):
         self.prompt = Prompt.from_file("prompts/main.md")
-        self.prompt.set_prefix('\n')
+        self.prompt.set_prefix("\n")
         if not self.tools_support:
             tool_prompt = Prompt.from_file("prompts/tool_desc.md")
             tool_prompt.bind_visibility(self.show_tools)
@@ -61,27 +57,27 @@ class Chat:
         return self.prompt.content()
 
     def run(self):
-        self.conversation.push('system', self.get_sys())
+        self.conversation.push("system", self.get_sys())
         self.ui.debug(self.conversation.get_messages())
         self.read_user_input = True
-        while (True):
+        while True:
             cont = self.step()
-            if (not cont):
+            if not cont:
                 break
 
     def read_input(self):
         user_prompt = self.ui.get_input()
-        if (not user_prompt):
+        if not user_prompt:
             return False
-        if (user_prompt in ["quit", "exit"]):
+        if user_prompt in ["quit", "exit"]:
             return False
         self.conversation.push("user", user_prompt)
         return True
 
     def step(self):
-        if (self.read_user_input):
+        if self.read_user_input:
             cont = self.read_input()
-            if (not cont):
+            if not cont:
                 return False
         if self.tools_support:
             return self.step_tools_native()
@@ -89,41 +85,35 @@ class Chat:
             return self.step_tools_in_prompt()
 
     def get_tools_data(self) -> list[ToolCallGen]:
-        return [
-                t.description.generate_call() for t in self.tools.values()
-        ]
+        return [t.description.generate_call() for t in self.tools.values()]
 
     def step_tools_in_prompt(self):
         ai = self.client.ask(self.conversation.get_messages())
         self.ui.debug(ai)
-        toolResults = []
+        tool_results = []
         for part in ai:
             if is_text_msg(part):
                 self.process_text_msg(part)
             else:
-                self.process_tool_call(part, toolResults)
-        if len(toolResults) == 0:
+                self.process_tool_call(part, tool_results)
+        if len(tool_results) == 0:
             self.read_user_input = True
             return True
         self.read_user_input = False
 
-        self.conversation.push(
-                "user",
-                "\n".join(toolResults)
-        )
+        self.conversation.push("user", "\n".join(tool_results))
         self.ui.debug(self.conversation.get_messages())
         return True
 
     def step_tools_native(self):
         messages, tool_calls = self.client.ask_with_tools(
-                self.conversation.get_messages(),
-                self.get_tools_data()
+            self.conversation.get_messages(), self.get_tools_data()
         )
         self.ui.debug(f"MESSAGES: {messages}")
         self.ui.debug(f"CALLS: {tool_calls}")
 
         if tool_calls:
-            self.conversation.push_tool_calls('assistant', tool_calls)
+            self.conversation.push_tool_calls("assistant", tool_calls)
         for msg in messages:
             self.process_text_msg(msg)
         for tool_call in tool_calls:
@@ -142,19 +132,15 @@ class Chat:
         self.ui.say("Agent", msg.text)
 
     def process_tool_call(self, call: ToolCall, results: list):
-        self.ui.debug('tool call')
-        toolResult = self.call_tool(call)
-        self.ui.debug(toolResult)
-        self.conversation.push(
-            "assistant",
-            f"tool call: {call.name}, {call.args}"
-        )
-        results.append(toolResult)
+        self.ui.debug("tool call")
+        tool_result = self.call_tool(call)
+        self.ui.debug(tool_result)
+        self.conversation.push("assistant", f"tool call: {call.name}, {call.args}")
+        results.append(tool_result)
 
     def process_native_tool_call(self, call: OpenAIToolCall):
         result = self.call_tool_native(call)
-        self.conversation.push_tool(
-                call.id, call.function.name, str(result))
+        self.conversation.push_tool(call.id, call.function.name, str(result))
 
     def add_tool(self, tool: ToolDefinition):
         self.tools[tool.name] = tool

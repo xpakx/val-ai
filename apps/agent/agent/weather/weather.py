@@ -1,5 +1,5 @@
-import requests
 import msgspec
+import requests
 
 
 class Location(msgspec.Struct):
@@ -36,12 +36,12 @@ class WeatherResponse(msgspec.Struct):
 def fetch_city_data(query: str) -> GeocodingResponse:
     url = "http://geocoding-api.open-meteo.com/v1/search"
     data = {
-            "name": query,
-            "count": 1,
-            "language": "en",
-            "format": "json",
+        "name": query,
+        "count": 1,
+        "language": "en",
+        "format": "json",
     }
-    headers = {'User-Agent': 'WeatherTool/1.0'}
+    headers = {"User-Agent": "WeatherTool/1.0"}
 
     response = requests.get(url, params=data, headers=headers)
     response.raise_for_status()
@@ -55,9 +55,9 @@ def get_weather(lat: float, long: float) -> WeatherResponse:
         "latitude": lat,
         "longitude": long,
         "current": "temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,relative_humidity_2m",
-        "timezone": "auto"
+        "timezone": "auto",
     }
-    headers = {'User-Agent': 'WeatherTool/1.0'}
+    headers = {"User-Agent": "WeatherTool/1.0"}
 
     response = requests.get(url, params=data, headers=headers)
     response.raise_for_status()

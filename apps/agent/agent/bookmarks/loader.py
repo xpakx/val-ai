@@ -1,13 +1,12 @@
+import sqlite3
+from configparser import ConfigParser
+from contextlib import closing
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Protocol
-from configparser import ConfigParser
-import sqlite3
+
 import msgspec
-from datetime import datetime, timedelta
-from contextlib import closing
-
 from client.config import get_xdg_data_location
-
 
 PRIME_EPOCH = datetime(1970, 1, 1)
 
@@ -38,7 +37,7 @@ def load_ini_file(root_path: Path) -> ConfigParser:
     profiles_ini = root_path / "profiles.ini"
     if not profiles_ini.exists():
         raise FileNotFoundError(
-                f"profiles.ini not found in expected location: {profiles_ini}"
+            f"profiles.ini not found in expected location: {profiles_ini}"
         )
 
     config = ConfigParser()
@@ -50,12 +49,11 @@ def find_default_profile(config: ConfigParser, root_path: Path) -> Path | None:
     default_profile_path = None
     for section in config.sections():
         if section.startswith("Profile"):
-            section_name = config.get(section, 'Name', fallback='0')
-            if section_name != 'default-release':
+            section_name = config.get(section, "Name", fallback="0")
+            if section_name != "default-release":
                 continue
-            path_name = config.get(section, 'Path')
-            is_relative = config.getboolean(
-                    section, 'IsRelative', fallback=True)
+            path_name = config.get(section, "Path")
+            is_relative = config.getboolean(section, "IsRelative", fallback=True)
 
             if is_relative:
                 default_profile_path = root_path / path_name
@@ -73,7 +71,7 @@ def find_firefox_db() -> Path:
     db_path = profile / "places.sqlite"
     if not db_path.exists():
         raise FileNotFoundError(
-                f"places.sqlite not found in the profile path: {profile}"
+            f"places.sqlite not found in the profile path: {profile}"
         )
 
     return db_path
@@ -88,18 +86,16 @@ def prtime_to_datetime(pr_time: int) -> str:
 
 def last_24h_query() -> str:
     return prepare_query(
-            "b.dateAdded > (strftime('%s', 'now') * 1000000 - 86400000000)"
+        "b.dateAdded > (strftime('%s', 'now') * 1000000 - 86400000000)"
     )
 
 
 def in_name_query(name: str) -> str:
-    return prepare_query(
-            f"p.title LIKE '%{name}%'"
-    )
+    return prepare_query(f"p.title LIKE '%{name}%'")
 
 
 def prepare_query(condition: str) -> str:
-    SQL_QUERY = f"""
+    return f"""
         SELECT
             p.title,
             p.url,
@@ -115,13 +111,14 @@ def prepare_query(condition: str) -> str:
         ORDER BY
             b.dateAdded DESC;
         """
-    return SQL_QUERY
 
 
 def fetch_bookmarks_from_db(db_path: Path, query: str) -> list[BookmarkData]:
     try:
         print(f"Connecting to database: {db_path}")
-        with closing(sqlite3.connect(f"file:{db_path}?mode=ro&immutable=1", uri=True)) as conn:
+        with closing(
+            sqlite3.connect(f"file:{db_path}?mode=ro&immutable=1", uri=True)
+        ) as conn:
             cursor = conn.cursor()
 
             bookmarks = []
@@ -131,18 +128,20 @@ def fetch_bookmarks_from_db(db_path: Path, query: str) -> list[BookmarkData]:
                     continue
                 clean_title = title.strip() if title else url
                 bookmarks.append(
-                        BookmarkData(
-                            title=clean_title,
-                            url=url,
-                            added=prtime_to_datetime(date_added_prtime),
-                            timestamp=date_added_prtime,
-                            rev_domain=rev_domain,
-                        )
+                    BookmarkData(
+                        title=clean_title,
+                        url=url,
+                        added=prtime_to_datetime(date_added_prtime),
+                        timestamp=date_added_prtime,
+                        rev_domain=rev_domain,
+                    )
                 )
             return bookmarks
     except sqlite3.OperationalError as e:
         if "database is locked" in str(e):
-            raise Exception("WARNING: The database is locked. Ensure Firefox is closed or try again.")
+            raise Exception(
+                "WARNING: The database is locked. Ensure Firefox is closed or try again."
+            ) from e
         raise e
 
 
@@ -160,7 +159,7 @@ def get_bookmarks_by_name(db_path: Path, name: str) -> list[BookmarkData]:
     return bookmarks
 
 
-class FirefoxBookmarkBridge():
+class FirefoxBookmarkBridge:
     def __init__(self):
         self.db_path = find_firefox_db()
 

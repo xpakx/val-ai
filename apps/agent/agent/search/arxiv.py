@@ -1,7 +1,8 @@
-import requests
-import pygixml
-import msgspec
 from pathlib import Path
+
+import msgspec
+import pygixml
+import requests
 
 
 class ArXivData(msgspec.Struct):
@@ -17,6 +18,7 @@ class ArXivData(msgspec.Struct):
 
 
 def search_arxiv(query: str) -> list[ArXivData]:
+    """Search in ArXiv"""
     url = "http://export.arxiv.org/api/query"
     data = {"search_query": f"all:{query}"}
 
@@ -24,33 +26,33 @@ def search_arxiv(query: str) -> list[ArXivData]:
     response.raise_for_status()
     tree = pygixml.parse_string(response.text)
 
-    entries = tree.root.select_nodes('entry')
+    entries = tree.root.select_nodes("entry")
     links: list[ArXivData] = []
 
     for entry in entries:
         struct = ArXivData()
         for child in entry.node.children():
-            if child.name == 'id':
+            if child.name == "id":
                 struct.id = child.text()
-            elif child.name == 'title':
+            elif child.name == "title":
                 struct.title = child.text()
-            elif child.name == 'summary':
+            elif child.name == "summary":
                 struct.description = child.text()
-            elif child.name == 'link':
-                tp = child.attribute('title').value
-                href = child.attribute('href').value
-                if tp == 'pdf':
+            elif child.name == "link":
+                tp = child.attribute("title").value
+                href = child.attribute("href").value
+                if tp == "pdf":
                     struct.pdf_link = href
                 else:
                     struct.html_link = href
-            elif child.name == 'published':
+            elif child.name == "published":
                 struct.published = child.text()
-            elif child.name == 'arxiv:journal_ref':
+            elif child.name == "arxiv:journal_ref":
                 struct.journal = child.text()
-            elif child.name == 'author':
+            elif child.name == "author":
                 struct.authors.append(child.first_child().text())
-            elif child.name == 'category':
-                struct.categories.append(child.attribute('term').value)
+            elif child.name == "category":
+                struct.categories.append(child.attribute("term").value)
         links.append(struct)
     return links
 
@@ -61,8 +63,8 @@ def arxiv_get_pdf(paper: ArXivData, output: str | Path):
     output = Path(output)
 
     with (
-            requests.get(paper.pdf_link, stream=True) as response,
-            output.open("wb") as f,
+        requests.get(paper.pdf_link, stream=True) as response,
+        output.open("wb") as f,
     ):
         response.raise_for_status()
 
@@ -78,4 +80,4 @@ if __name__ == "__main__":
         print()
     exit(0)
     r = results[0]
-    arxiv_get_pdf(r, 'test.pdf')
+    arxiv_get_pdf(r, "test.pdf")
