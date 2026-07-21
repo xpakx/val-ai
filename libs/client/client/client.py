@@ -3,6 +3,7 @@ from typing import Any, Literal, TypeVar
 
 import msgspec
 import requests
+import time
 
 from client.config import Config
 from client.format import prepare_response_format
@@ -15,6 +16,7 @@ from client.typedefs import (
     OpenAIToolCall,
     TextMessage,
     ToolCallGen,
+    GoogleErrorWrapper,
 )
 
 T = TypeVar("T")
@@ -52,10 +54,28 @@ class Client:
     def call_backoff(self, payload: dict[str, Any]) -> requests.Response | None:
         if not self.backoff:
             return None
-        return self.backoff(
+        result = self.backoff(
             lambda: self.request(payload),
             5,
         )
+        if result.status_code == 429:
+            err = msgspec.json.decode(result.text, type=list[GoogleErrorWrapper])[0]
+            print(err)
+            details = err.error.details
+            delay = None
+            for d in details:
+                if d.retryDelay:
+                    delay = d.retryDelay
+                    break
+            print(delay)
+            # TODO: other providers
+            # TODO: google info about delay very often is wrong
+            # TODO: sometimes time could prolly be longer than 59s
+            delay = int(delay[:-1])
+            time.sleep(delay)
+            return self.call_backoff(payload)
+        else:
+            return result
 
     def call_api(
         self,
