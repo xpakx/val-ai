@@ -2,6 +2,7 @@ import asyncio
 import time
 from collections.abc import Awaitable, Callable
 from typing import TypeVar, Iterable, Iterator
+from itertools import islice
 
 T = TypeVar("T")
 
@@ -62,31 +63,29 @@ def backoff_retry(
     delays: Iterable[float],
     max_attempts: int | None = None,
 ) -> T | None:
-    delay_iter = iter(delays)
-    attempt = 1
-
-    while True:
+    retry_delays = (
+        islice(delays, max_attempts - 1)
+        if max_attempts is not None
+        else delays
+    )
+    for attempt, delay in enumerate(retry_delays, start=1):
         try:
-            print(f"Attempt {attempt}")
             result = task()
             print("Task finished successfully!")
-        except Exception as e:
-            print(f"Task failed: {e}")
-        else:
             return result
-        if max_attempts is not None and attempt >= max_attempts:
-            print("Max attempts reached, giving up.")
-            return None
-        try:
-            delay = next(delay_iter)
+        except Exception as e:
+            print(
+                f"Attempt {attempt} failed ({e}). Retrying in {delay:.2f}s..."
+            )
             time.sleep(delay)
-        except StopIteration:
-            print("Max attempts reached, giving up.")
-            return None
-        attempt += 1
-
-    print("Max attempts reached, giving up.")
-    return None
+    try:
+        result = task()
+        print("Task finished successfully!")
+        return result
+    except Exception as e:
+        print(f"Attempt {max_attempts} failed ({e}).")
+        print("Max attempts reached, giving up.")
+        return None
 
 
 def fibonacci_delays(start_index: int = 0) -> Iterator[float]:
