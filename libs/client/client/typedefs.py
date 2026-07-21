@@ -115,3 +115,19 @@ class OpenAIResponseFormat(msgspec.Struct):
 
 
 ChatMessage = ChatTextMessage | ToolResponse | ToolCallMessage
+
+
+class GoogleErrorDetails(msgspec.Struct):
+    type: str = msgspec.field(name="@type")
+    retryDelay: str | None = None
+
+
+class GoogleError(msgspec.Struct):
+    code: int
+    message: str
+    status: Literal["RESOURCE_EXHAUSTED"]
+    details: list[GoogleErrorDetails]
+
+
+class GoogleErrorWrapper(msgspec.Struct):
+    error: GoogleError
