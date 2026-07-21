@@ -97,6 +97,20 @@ def fibonacci_delays(start_index: int = 0) -> Iterator[float]:
         a, b = b, a + b
 
 
+def exponential_delays(
+    base: float = 1.0, factor: float = 2.0, max_delay: float | None = None
+) -> Iterator[float]:
+    delay = base
+    while True:
+        yield min(delay, max_delay) if max_delay is not None else delay
+        delay *= factor
+
+
+def constant_delays(interval: float = 1.0) -> Iterator[float]:
+    while True:
+        yield interval
+
+
 if __name__ == "__main__":
     def api_call() -> str:
         raise ValueError("Connection timed out")
@@ -105,4 +119,15 @@ if __name__ == "__main__":
         task=api_call,
         delays=fibonacci_delays(start_index=2),
         max_attempts=4,
+    )
+
+    result = backoff_retry(
+        task=api_call,
+        delays=exponential_delays(base=0.5, factor=2.0, max_delay=30.0),
+        max_attempts=5,
+    )
+
+    result = backoff_retry(
+        task=api_call,
+        delays=[1.0, 2.0, 5.0, 10.0],
     )
