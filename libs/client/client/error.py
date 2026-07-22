@@ -1,6 +1,8 @@
 from typing import Protocol
-from requests import Response
+
 import msgspec
+from requests import Response
+
 from client.typedefs import GoogleErrorWrapper
 
 
@@ -12,10 +14,7 @@ class GoogleErrorProcessor(ErrorProcessor):
     def check_for_retry(self, http_response: Response) -> int | None:
         if http_response.status_code != 429:
             return
-        err = msgspec.json.decode(
-                http_response.text,
-                type=list[GoogleErrorWrapper]
-        )[0]
+        err = msgspec.json.decode(http_response.text, type=list[GoogleErrorWrapper])[0]
         print(err)
         details = err.error.details
         delay = None

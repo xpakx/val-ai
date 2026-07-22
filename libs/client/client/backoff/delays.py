@@ -1,5 +1,5 @@
-from collections.abc import Iterable, Iterator
 import random
+from collections.abc import Iterable, Iterator
 
 
 def fibonacci_delays(start_index: int = 0) -> Iterator[float]:

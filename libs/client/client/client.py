@@ -5,13 +5,13 @@ from typing import Any, Literal, TypeVar
 import msgspec
 import requests
 
-from client.config import Config
-from client.format import prepare_response_format
 from client.backoff import backoff_retry
+from client.config import Config
+from client.error import ErrorProcessor, GoogleErrorProcessor
+from client.format import prepare_response_format
 from client.json import JsonRescuer
 from client.typedefs import (
     ChatMessage,
-    GoogleErrorWrapper,
     Message,
     OpenAIResponse,
     OpenAIResponseFormat,
@@ -19,7 +19,6 @@ from client.typedefs import (
     TextMessage,
     ToolCallGen,
 )
-from client.error import ErrorProcessor, GoogleErrorProcessor
 
 T = TypeVar("T")
 
@@ -56,13 +55,13 @@ class Client:
         if not self.backoff:
             return None
         result = backoff_retry(
-                task=lambda: self.request(payload),
-                delays=self.backoff(),
-                max_attempts=5,
+            task=lambda: self.request(payload),
+            delays=self.backoff(),
+            max_attempts=5,
         )
-        if result.status_code == 200:
+        if result is None or result.status_code == 200:
             return result
-        delay = self._error_proc(result)
+        delay = self._error_proc.check_for_retry(result)
         if delay is None:
             return result
         time.sleep(delay)
