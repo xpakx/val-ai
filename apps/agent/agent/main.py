@@ -1,5 +1,5 @@
 from client import Client
-from client.backoff import fibonacci_backoff
+from client.fibonacci import fibonacci_delays
 from client.config import load_config
 from tools.toolgen import get_tool
 from tools.tools import FileTool
@@ -20,7 +20,7 @@ def prepare_tools(chat: Chat) -> None:
 
 def main(tools):
     config = load_config("data/config.json")
-    client = Client(config, fibonacci_backoff)
+    client = Client(config, fibonacci_delays)
     chat = Chat(client, CLIProvider(), tool_support=tools)
     prepare_tools(chat)
 

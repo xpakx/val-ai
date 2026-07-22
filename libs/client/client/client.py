@@ -7,6 +7,7 @@ import requests
 
 from client.config import Config
 from client.format import prepare_response_format
+from client.fibonacci import backoff_retry
 from client.json import JsonRescuer
 from client.typedefs import (
     ChatMessage,
@@ -52,9 +53,10 @@ class Client:
     def call_backoff(self, payload: dict[str, Any]) -> requests.Response | None:
         if not self.backoff:
             return None
-        result = self.backoff(
-            lambda: self.request(payload),
-            5,
+        result = backoff_retry(
+                task=lambda: self.request(payload),
+                delays=self.backoff(),
+                max_attempts=5,
         )
         if result.status_code == 429:
             err = msgspec.json.decode(result.text, type=list[GoogleErrorWrapper])[0]
