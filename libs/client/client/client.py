@@ -19,6 +19,7 @@ from client.typedefs import (
     TextMessage,
     ToolCallGen,
 )
+from client.error import ErrorProcessor, GoogleErrorProcessor
 
 T = TypeVar("T")
 
@@ -33,6 +34,7 @@ class Client:
         self.backoff = backoff
         self._temperature = 0.7
         self._rescuer = JsonRescuer()
+        self._error_proc: ErrorProcessor = GoogleErrorProcessor()
 
     def set_temperature(self, temp: float) -> None:
         self._temperature = max(0.0, min(1.0, temp))
@@ -58,24 +60,13 @@ class Client:
                 delays=self.backoff(),
                 max_attempts=5,
         )
-        if result.status_code == 429:
-            err = msgspec.json.decode(result.text, type=list[GoogleErrorWrapper])[0]
-            print(err)
-            details = err.error.details
-            delay = None
-            for d in details:
-                if d.retryDelay:
-                    delay = d.retryDelay
-                    break
-            print(delay)
-            # TODO: other providers
-            # TODO: google info about delay very often is wrong
-            # TODO: sometimes time could prolly be longer than 59s
-            delay = int(delay[:-1])
-            time.sleep(delay)
-            return self.call_backoff(payload)
-        else:
+        if result.status_code == 200:
             return result
+        delay = self._error_proc(result)
+        if delay is None:
+            return result
+        time.sleep(delay)
+        return self.call_backoff(payload)
 
     def call_api(
         self,
