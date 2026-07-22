@@ -1,8 +1,9 @@
 import asyncio
+import random
 import time
-from collections.abc import Awaitable, Callable
-from typing import TypeVar, Iterable, Iterator
+from collections.abc import Awaitable, Callable, Iterable, Iterator
 from itertools import islice
+from typing import TypeVar
 
 T = TypeVar("T")
 
@@ -64,9 +65,7 @@ def backoff_retry(
     max_attempts: int | None = None,
 ) -> T | None:
     retry_delays = (
-        islice(delays, max_attempts - 1)
-        if max_attempts is not None
-        else delays
+        islice(delays, max_attempts - 1) if max_attempts is not None else delays
     )
     for attempt, delay in enumerate(retry_delays, start=1):
         try:
@@ -74,9 +73,7 @@ def backoff_retry(
             print("Task finished successfully!")
             return result
         except Exception as e:
-            print(
-                f"Attempt {attempt} failed ({e}). Retrying in {delay:.2f}s..."
-            )
+            print(f"Attempt {attempt} failed ({e}). Retrying in {delay:.2f}s...")
             time.sleep(delay)
     try:
         result = task()
@@ -111,9 +108,23 @@ def constant_delays(interval: float = 1.0) -> Iterator[float]:
         yield interval
 
 
+def add_jitter(delays: Iterable[float], jitter_range: float = 0.2) -> Iterator[float]:
+    for d in delays:
+        low = d * (1.0 - jitter_range)
+        high = d * (1.0 + jitter_range)
+        yield max(0.0, random.uniform(low, high))
+
+
 if __name__ == "__main__":
+
     def api_call() -> str:
         raise ValueError("Connection timed out")
+
+    result = backoff_retry(
+        task=api_call,
+        delays=add_jitter(exponential_delays(base=0.5, factor=2.0, max_delay=30.0)),
+        max_attempts=5,
+    )
 
     result = backoff_retry(
         task=api_call,

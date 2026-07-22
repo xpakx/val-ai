@@ -1,22 +1,22 @@
+import time
 from collections.abc import Callable
 from typing import Any, Literal, TypeVar
 
 import msgspec
 import requests
-import time
 
 from client.config import Config
 from client.format import prepare_response_format
 from client.json import JsonRescuer
 from client.typedefs import (
     ChatMessage,
+    GoogleErrorWrapper,
     Message,
     OpenAIResponse,
     OpenAIResponseFormat,
     OpenAIToolCall,
     TextMessage,
     ToolCallGen,
-    GoogleErrorWrapper,
 )
 
 T = TypeVar("T")
@@ -46,9 +46,7 @@ class Client:
         return f"{self.config.provider}chat/completions"
 
     def request(self, payload):
-        return requests.post(
-                self.completion_url(), headers=self.headers, json=payload
-            )
+        return requests.post(self.completion_url(), headers=self.headers, json=payload)
 
     # TODO: 429 error
     def call_backoff(self, payload: dict[str, Any]) -> requests.Response | None:
