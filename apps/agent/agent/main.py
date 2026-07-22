@@ -1,5 +1,5 @@
 from client import Client
-from client.fibonacci import fibonacci_delays
+from client.backoff.delays import fibonacci_delays
 from client.config import load_config
 from tools.toolgen import get_tool
 from tools.tools import FileTool

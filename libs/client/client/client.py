@@ -7,7 +7,7 @@ import requests
 
 from client.config import Config
 from client.format import prepare_response_format
-from client.fibonacci import backoff_retry
+from client.backoff import backoff_retry
 from client.json import JsonRescuer
 from client.typedefs import (
     ChatMessage,
